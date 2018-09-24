@@ -1,6 +1,7 @@
 /*
  * The Clear BSD License
- * Copyright 2017 NXP
+ * Copyright (c) 2015, Freescale Semiconductor, Inc.
+ * Copyright 2016 NXP
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -30,75 +31,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#undef __cplusplus
 
-#include "board.h"
-#include "fsl_gpio.h"
-
-#include "pin_mux.h"
+#ifndef __USB_KHCI_H__
+#define __USB_KHCI_H__
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define BOARD_LED_GPIO BOARD_LED_RED_GPIO
-#define BOARD_LED_GPIO_PIN BOARD_LED_RED_GPIO_PIN
 
-/*******************************************************************************
- * Prototypes
- ******************************************************************************/
+#define USB_KHCI_BDT_DEVICE_OUT_TOKEN (0x01U)
+#define USB_KHCI_BDT_DEVICE_IN_TOKEN (0x09U)
+#define USB_KHCI_BDT_DEVICE_SETUP_TOKEN (0x0DU)
 
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-volatile uint32_t g_systickCounter;
+#define USB_KHCI_BDT_OWN (0x80U)
+#define USB_KHCI_BDT_DATA01(x) ((((uint32_t)(x)) & 0x01U) << 0x06U)
+#define USB_KHCI_BDT_BC(x) ((((uint32_t)(x)) & 0x3FFU) << 0x10U)
+#define UBS_KHCI_BDT_KEEP (0x20U)
+#define UBS_KHCI_BDT_NINC (0x10U)
+#define USB_KHCI_BDT_DTS (0x08U)
+#define USB_KHCI_BDT_STALL (0x04U)
 
-/*******************************************************************************
- * Code
- ******************************************************************************/
-void SysTick_Handler(void)
+typedef enum _usb_khci_interrupt_type
 {
-    if (g_systickCounter != 0U)
-    { 
-        g_systickCounter--;
-    }
-}
+    kUSB_KhciInterruptReset = 0x01U,
+    kUSB_KhciInterruptError = 0x02U,
+    kUSB_KhciInterruptSofToken = 0x04U,
+    kUSB_KhciInterruptTokenDone = 0x08U,
+    kUSB_KhciInterruptSleep = 0x10U,
+    kUSB_KhciInterruptResume = 0x20U,
+    kUSB_KhciInterruptAttach = 0x40U,
+    kUSB_KhciInterruptStall = 0x80U,
+} usb_khci_interrupt_type_t;
 
-void SysTick_DelayTicks(uint32_t n)
-{
-    g_systickCounter = n;
-    while(g_systickCounter != 0U)
-    {
-    }
-}
-
-/*!
- * @brief Main function
- */
-int main(void)
-{
-    /* Define the init structure for the output LED pin*/
-    gpio_pin_config_t led_config = {
-        kGPIO_DigitalOutput, 0,
-    };
-
-    /* Board pin init */
-    BOARD_InitPins();
-
-    /* Init output LED GPIO. */
-    GPIO_PinInit(BOARD_LED_GPIO, BOARD_LED_GPIO_PIN, &led_config);
-
-    /* Set systick reload value to generate 1ms interrupt */
-    if(SysTick_Config(SystemCoreClock / 1000U))
-    {
-        while(1)
-        {
-        }
-    }
-
-    while (1)
-    {
-        /* Delay 1000 ms */
-        SysTick_DelayTicks(500U);
-        GPIO_PortToggle(BOARD_LED_GPIO, 1u << BOARD_LED_GPIO_PIN);
-    }
-}
+#endif /* __USB_KHCI_H__ */

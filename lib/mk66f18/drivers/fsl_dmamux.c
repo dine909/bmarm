@@ -1,11 +1,12 @@
 /*
  * The Clear BSD License
- * Copyright 2017 NXP
+ * Copyright (c) 2015, Freescale Semiconductor, Inc.
+ * Copyright 2016-2017 NXP
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted (subject to the limitations in the disclaimer below) provided
- * that the following conditions are met:
+ *  that the following conditions are met:
  *
  * o Redistributions of source code must retain the above copyright notice, this list
  *   of conditions and the following disclaimer.
@@ -30,75 +31,73 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#undef __cplusplus
 
-#include "board.h"
-#include "fsl_gpio.h"
-
-#include "pin_mux.h"
+#include "fsl_dmamux.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define BOARD_LED_GPIO BOARD_LED_RED_GPIO
-#define BOARD_LED_GPIO_PIN BOARD_LED_RED_GPIO_PIN
+
+/* Component ID definition, used by tools. */
+#ifndef FSL_COMPONENT_ID
+#define FSL_COMPONENT_ID "platform.drivers.dmamux"
+#endif
+
 
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
 
+/*!
+ * @brief Get instance number for DMAMUX.
+ *
+ * @param base DMAMUX peripheral base address.
+ */
+static uint32_t DMAMUX_GetInstance(DMAMUX_Type *base);
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-volatile uint32_t g_systickCounter;
+
+/*! @brief Array to map DMAMUX instance number to base pointer. */
+static DMAMUX_Type *const s_dmamuxBases[] = DMAMUX_BASE_PTRS;
+
+#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) && FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
+/*! @brief Array to map DMAMUX instance number to clock name. */
+static const clock_ip_name_t s_dmamuxClockName[] = DMAMUX_CLOCKS;
+#endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
-void SysTick_Handler(void)
+static uint32_t DMAMUX_GetInstance(DMAMUX_Type *base)
 {
-    if (g_systickCounter != 0U)
-    { 
-        g_systickCounter--;
-    }
-}
+    uint32_t instance;
 
-void SysTick_DelayTicks(uint32_t n)
-{
-    g_systickCounter = n;
-    while(g_systickCounter != 0U)
+    /* Find the instance index from base address mappings. */
+    for (instance = 0; instance < ARRAY_SIZE(s_dmamuxBases); instance++)
     {
-    }
-}
-
-/*!
- * @brief Main function
- */
-int main(void)
-{
-    /* Define the init structure for the output LED pin*/
-    gpio_pin_config_t led_config = {
-        kGPIO_DigitalOutput, 0,
-    };
-
-    /* Board pin init */
-    BOARD_InitPins();
-
-    /* Init output LED GPIO. */
-    GPIO_PinInit(BOARD_LED_GPIO, BOARD_LED_GPIO_PIN, &led_config);
-
-    /* Set systick reload value to generate 1ms interrupt */
-    if(SysTick_Config(SystemCoreClock / 1000U))
-    {
-        while(1)
+        if (s_dmamuxBases[instance] == base)
         {
+            break;
         }
     }
 
-    while (1)
-    {
-        /* Delay 1000 ms */
-        SysTick_DelayTicks(500U);
-        GPIO_PortToggle(BOARD_LED_GPIO, 1u << BOARD_LED_GPIO_PIN);
-    }
+    assert(instance < ARRAY_SIZE(s_dmamuxBases));
+
+    return instance;
+}
+
+void DMAMUX_Init(DMAMUX_Type *base)
+{
+#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) && FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
+    CLOCK_EnableClock(s_dmamuxClockName[DMAMUX_GetInstance(base)]);
+#endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
+}
+
+void DMAMUX_Deinit(DMAMUX_Type *base)
+{
+#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) && FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
+    CLOCK_DisableClock(s_dmamuxClockName[DMAMUX_GetInstance(base)]);
+#endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
 }

@@ -1,6 +1,7 @@
 /*
  * The Clear BSD License
- * Copyright 2017 NXP
+ * Copyright (c) 2015 - 2016, Freescale Semiconductor, Inc.
+ * Copyright 2016 NXP
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -30,75 +31,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#undef __cplusplus
 
-#include "board.h"
-#include "fsl_gpio.h"
-
-#include "pin_mux.h"
+#ifndef __USB_OSA_BM_H__
+#define __USB_OSA_BM_H__
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define BOARD_LED_GPIO BOARD_LED_RED_GPIO
-#define BOARD_LED_GPIO_PIN BOARD_LED_RED_GPIO_PIN
+
+#define USB_OSA_SR_ALLOC() uint32_t usbOsaCurrentSr;
+#define USB_OSA_ENTER_CRITICAL() USB_OsaEnterCritical(&usbOsaCurrentSr)
+#define USB_OSA_EXIT_CRITICAL() USB_OsaExitCritical(usbOsaCurrentSr)
 
 /*******************************************************************************
- * Prototypes
+ * API
  ******************************************************************************/
 
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-volatile uint32_t g_systickCounter;
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-/*******************************************************************************
- * Code
- ******************************************************************************/
-void SysTick_Handler(void)
-{
-    if (g_systickCounter != 0U)
-    { 
-        g_systickCounter--;
-    }
+extern void USB_OsaEnterCritical(uint32_t *sr);
+extern void USB_OsaExitCritical(uint32_t sr);
+
+#if defined(__cplusplus)
 }
+#endif
 
-void SysTick_DelayTicks(uint32_t n)
-{
-    g_systickCounter = n;
-    while(g_systickCounter != 0U)
-    {
-    }
-}
-
-/*!
- * @brief Main function
- */
-int main(void)
-{
-    /* Define the init structure for the output LED pin*/
-    gpio_pin_config_t led_config = {
-        kGPIO_DigitalOutput, 0,
-    };
-
-    /* Board pin init */
-    BOARD_InitPins();
-
-    /* Init output LED GPIO. */
-    GPIO_PinInit(BOARD_LED_GPIO, BOARD_LED_GPIO_PIN, &led_config);
-
-    /* Set systick reload value to generate 1ms interrupt */
-    if(SysTick_Config(SystemCoreClock / 1000U))
-    {
-        while(1)
-        {
-        }
-    }
-
-    while (1)
-    {
-        /* Delay 1000 ms */
-        SysTick_DelayTicks(500U);
-        GPIO_PortToggle(BOARD_LED_GPIO, 1u << BOARD_LED_GPIO_PIN);
-    }
-}
+#endif /* __USB_OSA_BM_H__ */
