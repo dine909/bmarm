@@ -66,6 +66,7 @@ Product {
     Rule {
         id: size
         inputs: "application"
+        alwaysRun: true
         Artifact {
             fileTags: "size"
             filePath: "-"
@@ -77,6 +78,11 @@ Product {
             cmd.highlight = "linker";
             return cmd;
         }
+    }
+    Group {
+        name: "linker scripts"
+        files: ["../../lib/mk66f18/MK66FX1M0xxx18_flash.ld"]
+        fileTags: ["linkerscript"]
     }
 
 }

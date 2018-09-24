@@ -54,6 +54,7 @@ StaticLibrary {
     cpp.cLanguageVersion: "c11"
     cpp.linkerFlags: ["--gc-sections", "-static", "-z", "muldefs","-lm","-lc","-lgcc","-lnosys"]
 
+
     Export {
         Depends { name: "cpp" }
         cpp.includePaths: product.cpp.includePaths
@@ -63,10 +64,6 @@ StaticLibrary {
         cpp.commonCompilerFlags: product.cpp.commonCompilerFlags
 //            cpp.architecture: product.cpp.architecture
         cpp.linkerFlags:product.cpp.linkerFlags
-        Group {
-            name: "linker scripts"
-            files: ["MK66FX1M0xxx18_flash.ld"]
-            fileTags: ["linkerscript"]
-        }
+
     }
 }
