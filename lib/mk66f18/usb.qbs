@@ -1,7 +1,14 @@
 import qbs
 
+
 StaticLibrary {
     name: "usb"
+
+    property bool host: false
+    property bool device: false
+    property bool otg: false
+
+
     Depends { name: "cpp" }
     Depends { name: "mk66f18" }
 
@@ -13,38 +20,55 @@ StaticLibrary {
         "lib/mk66f18/middleware/usb/phy",
         "lib/mk66f18/middleware/usb/osa",
         "lib/mk66f18/middleware/usb/device",
-
     ]
-
     Group {
-        name: "usb utilities"
+        name: "utilities"
+        condition:  {return host || device || otg}
         prefix: "utilities/usb/"
         files: ["*.c","*.h"]
     }
     Group {
-        name: "usb include"
+        name: "include"
+        condition:  {return host || device || otg}
         prefix: "middleware/usb/include/"
         files: ["*.c","*.h"]
     }
     Group {
-        name: "usb osa"
+        name: "osa"
+        condition:  {return host || device || otg}
         prefix: "middleware/usb/osa/"
         files: ["*.c","*.h"]
     }
     Group {
-        name: "usb phy"
+        name: "phy"
+        condition:  {return host || device || otg}
         prefix: "middleware/usb/phy/"
         files: ["*.c","*.h"]
     }
+
+
     Group {
-        name: "usb device"
+        name: "device"
+        condition: device
         prefix: "middleware/usb/device/"
         files: ["*.c","*.h"]
     }
-
-    Export {
-        Depends { name: "cpp" }
-        cpp.includePaths: product.cpp.includePaths
-        cpp.defines: product.cpp.defines
+    Group {
+        name: "host"
+        condition: host
+        prefix: "middleware/usb/host/"
+        files: ["*.c","*.h"]
     }
+    Group {
+        name: "otg"
+        condition: otg
+        prefix: "middleware/usb/otg/"
+        files: ["*.c","*.h"]
+    }
+
+    //    Export {
+    //        Depends { name: "cpp" }
+    //        cpp.includePaths: product.cpp.includePaths
+    //        cpp.defines: product.cpp.defines
+    //    }
 }
