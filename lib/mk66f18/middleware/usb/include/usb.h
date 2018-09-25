@@ -35,8 +35,8 @@
 #ifndef __USB_H__
 #define __USB_H__
 
-#include <stdint.h>
-#include <stdio.h>
+#include "stdint.h"
+#include "stdio.h"
 #include "fsl_common.h"
 #include "usb_osa.h"
 #include "usb_misc.h"

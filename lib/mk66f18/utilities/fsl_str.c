@@ -32,9 +32,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include <math.h>
-#include <stdarg.h>
-#include <stdlib.h>
+#include "math.h"
+#include "stdarg.h"
+#include "stdlib.h"
 #include "fsl_str.h"
 #include "fsl_debug_console_conf.h"
 

@@ -78,6 +78,9 @@
 **
 ** ###################################################################
 */
+#undef __cplusplus
+#define bool int
+#define __null (void*)0
 
 /*!
  * @file MK66F18.h

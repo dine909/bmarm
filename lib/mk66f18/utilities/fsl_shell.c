@@ -65,7 +65,7 @@
  * However, I am not about to post a copy of anything licensed by AT&T.
  */
 
-#include <assert.h>
+#include "assert.h"
 #include "fsl_shell.h"
 
 /*******************************************************************************

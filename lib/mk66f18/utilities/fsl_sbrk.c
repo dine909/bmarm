@@ -32,8 +32,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(__GNUC__)
-#include <stdio.h>
-#include <errno.h>
+#include "stdio.h"
+#include "errno.h"
 #endif
 
 #if defined(__GNUC__)

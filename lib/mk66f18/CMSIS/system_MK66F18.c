@@ -92,7 +92,7 @@
  * (PLL) that is part of the microcontroller device.
  */
 
-#include <stdint.h>
+#include "stdint.h"
 #include "fsl_device_registers.h"
 
 

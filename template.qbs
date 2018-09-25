@@ -5,6 +5,7 @@ import "lib/mk66f18/usb.qbs" as Usb
 
 Project {
 
+
     references: [
         "lib/mk66f18/mk66f18.qbs",
     ]
@@ -18,6 +19,7 @@ Project {
     Board {
         name : "template"
 
+//        cpp.defines: ["__cplusplus"]
         Depends { name: "usb"}
 
         Group {

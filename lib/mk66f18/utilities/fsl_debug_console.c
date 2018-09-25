@@ -58,10 +58,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdarg.h>
-#include <stdlib.h>
+#include "stdarg.h"
+#include "stdlib.h"
 #if defined(__CC_ARM)
-#include <stdio.h>
+#include "stdio.h"
 #endif
 
 #include "fsl_debug_console.h"

@@ -37,6 +37,9 @@
 
 #ifndef __FSL_DEVICE_REGISTERS_H__
 #define __FSL_DEVICE_REGISTERS_H__
+#undef __cplusplus
+#define bool int
+#define __null (void*)0
 
 /*
  * Include the cpu specific register header files.

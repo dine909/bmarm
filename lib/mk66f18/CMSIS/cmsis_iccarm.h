@@ -474,7 +474,7 @@ __packed struct  __iar_u32 { uint32_t v; };
   #error intrinsics.h is already included previously!
   #endif
 
-  #include <intrinsics.h>
+  #include "intrinsics.h"
 
   #if __IAR_M0_FAMILY
    /* Avoid clash between intrinsics.h and arm_math.h when compiling for Cortex-M0. */

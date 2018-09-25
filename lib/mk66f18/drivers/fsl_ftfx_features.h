@@ -38,8 +38,8 @@
 #define _FSL_FTFX_FEATURES_H_
 
 #if (defined(BL_TARGET_FLASH) || defined(BL_TARGET_ROM) || defined(BL_TARGET_RAM))
-#include <assert.h>
-#include <string.h>
+#include "assert.h"
+#include "string.h"
 #include "fsl_device_registers.h"
 #include "bootloader_common.h"
 #else

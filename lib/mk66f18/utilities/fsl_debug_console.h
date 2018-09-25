@@ -47,6 +47,10 @@
 
 #ifndef _FSL_DEBUGCONSOLE_H_
 #define _FSL_DEBUGCONSOLE_H_
+#undef __cplusplus
+#define bool int
+#define __null (void*)0
+
 
 #include "fsl_common.h"
 /*!
@@ -72,7 +76,7 @@
 #endif
 
 #if defined(SDK_DEBUGCONSOLE) && !(SDK_DEBUGCONSOLE)
-#include <stdio.h>
+#include "stdio.h"
 #endif
 
 #if SDK_DEBUGCONSOLE /* Select printf, scanf, putchar, getchar of SDK version. */

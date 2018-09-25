@@ -35,14 +35,18 @@
 #ifndef _FSL_COMMON_H_
 #define _FSL_COMMON_H_
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
+#undef __cplusplus
+#define bool int
+#define __null (void*)0
+
+#include "assert.h"
+#include "stdbool.h"
+#include "stdint.h"
+#include "string.h"
+#include "stdlib.h"
 
 #if defined(__ICCARM__)
-#include <stddef.h>
+#include "stddef.h"
 #endif
 
 #include "fsl_device_registers.h"
