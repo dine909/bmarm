@@ -1,33 +1,18 @@
 import qbs
 import qbs.FileInfo
+
 import "platform/teensy36/teensy36.qbs" as Board
-import "lib/mk66f18/usb.qbs" as Usb
 
-Project {
-
-    references: [
-        "lib/mk66f18/mk66f18.qbs",
+Board {
+    projectName : "template"
+    projectFiles : [
+        "*.c",
+        "*.cpp",
+        "*.h",
     ]
 
-    Usb {
-        device:  false
-        host:    false
-        otg:     false
-    }
+    USE_USB_device: false
+    USE_USB_host: false
+    USE_USB_otg: false
 
-    Board {
-        name : "template"
-
-        Depends { name: "usb"}
-
-        Group {
-            name: "application"
-            prefix: "src/"
-            files: [
-                "*.c",
-                "*.cpp",
-                "*.h",
-            ]
-        }
-    }
 }

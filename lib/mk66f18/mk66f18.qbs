@@ -1,70 +1,87 @@
 import qbs
+import "usb.qbs" as Usb
 
-StaticLibrary {
-    name: "mk66f18"
-    Depends { name: "cpp" }
+Project {
+    name: "sdk"
 
-//        qbs.architecture: "arm"
-//        cpp.architecture: "armv4t"
+    property bool USB_host: false
+    property bool USB_device: false
+    property bool USB_otg: false
 
-    cpp.assemblerFlags: ["-D__STARTUP_CLEAR_BSS", "-D__STARTUP_INITIALIZE_NONCACHEDATA"]
-    cpp.positionIndependentCode: false
-
-    cpp.includePaths: ["lib/mk66f18/CMSIS",
-        "lib/mk66f18/drivers",
-        "lib/mk66f18/startup",
-        "lib/mk66f18/utilities"
-    ]
-
-    cpp.defines:  ["NDEBUG","CPU_MK66FX1M0VLQ18","TWR_K65F180M","TOWER","DEBUG"]
-
-    Group {
-        name: "sdk"
-//        prefix: "lib/mk66f18/"
-        files: [
-            "*/*.S",
-            "*/*.c",
-            "*/*.cpp",
-            "*/*.h",
-        ]
+    Usb {
+        device:  USB_device
+        host:    USB_host
+        otg:     USB_otg
     }
 
-    cpp.driverFlags: [
-        "-mcpu=cortex-m4"   ,
-        "--specs=nano.specs",
-        "--specs=nosys.specs",
-        "-mfloat-abi=hard",
-        "-mfpu=fpv4-sp-d16",
-        "-fno-exceptions",
-        "-mthumb",
-        "-mapcs",
-        "-MMD",
-        "-MP",
-        "-fno-common",
-        "-ffunction-sections",
-        "-fdata-sections",
-        "-ffreestanding",
-        "-fno-builtin",
-        "-static"
-    ]
-    cpp.cxxFlags: [
-        "-fno-rtti"
-    ]
-
-
-    cpp.cLanguageVersion: "c11"
-    cpp.linkerFlags: ["--gc-sections", "-static", "-z", "muldefs","-lm","-lc","-lgcc","-lnosys"]
-
-
-    Export {
+    StaticLibrary {
+        name: "mk66f18"
         Depends { name: "cpp" }
-        cpp.includePaths: product.cpp.includePaths
-        cpp.defines:product.cpp.defines
-        cpp.assemblerFlags: product.cpp.assemblerFlags
-        cpp.driverFlags: product.cpp.driverFlags
-        cpp.commonCompilerFlags: product.cpp.commonCompilerFlags
-//            cpp.architecture: product.cpp.architecture
-        cpp.linkerFlags:product.cpp.linkerFlags
 
+        //        qbs.architecture: "arm"
+        //        cpp.architecture: "armv4t"
+
+        cpp.assemblerFlags: ["-D__STARTUP_CLEAR_BSS", "-D__STARTUP_INITIALIZE_NONCACHEDATA"]
+        cpp.positionIndependentCode: false
+
+        cpp.includePaths: [
+            "CMSIS",
+            "drivers",
+            "startup",
+            "utilities"
+        ]
+
+        cpp.defines:  ["NDEBUG","CPU_MK66FX1M0VLQ18","TWR_K65F180M","TOWER","DEBUG"]
+
+
+        Group {
+            name: "sdk"
+            //        prefix: "lib/mk66f18/"
+            files: [
+                "*/*.S",
+                "*/*.c",
+                "*/*.cpp",
+                "*/*.h",
+            ]
+        }
+
+        cpp.driverFlags: [
+            "-mcpu=cortex-m4"   ,
+            "--specs=nano.specs",
+            "--specs=nosys.specs",
+            "-mfloat-abi=hard",
+            "-mfpu=fpv4-sp-d16",
+            "-fno-exceptions",
+            "-mthumb",
+            "-mapcs",
+            "-MMD",
+            "-MP",
+            "-fno-common",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-ffreestanding",
+            "-fno-builtin",
+            "-static"
+        ]
+        cpp.cxxFlags: [
+            "-fno-rtti"
+        ]
+
+
+        cpp.cLanguageVersion: "c11"
+        cpp.linkerFlags: ["--gc-sections", "-static", "-z", "muldefs","-lm","-lc","-lgcc","-lnosys"]
+
+
+        Export {
+            Depends { name: "cpp" }
+            cpp.includePaths: product.cpp.includePaths
+            cpp.defines:product.cpp.defines
+            cpp.assemblerFlags: product.cpp.assemblerFlags
+            cpp.driverFlags: product.cpp.driverFlags
+            cpp.commonCompilerFlags: product.cpp.commonCompilerFlags
+            //            cpp.architecture: product.cpp.architecture
+            cpp.linkerFlags:product.cpp.linkerFlags
+
+        }
     }
 }
