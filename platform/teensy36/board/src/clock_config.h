@@ -59,7 +59,7 @@ void BOARD_InitBootClocks(void);
 }
 #endif /* __cplusplus*/
 
-#define BOARD_XTAL0_CLK_HZ                         12000000U  /*!< Board xtal0 frequency in Hz */
+#define BOARD_XTAL0_CLK_HZ                         16000000U  /*!< Board xtal0 frequency in Hz */
 
 /*******************************************************************************
  ********************* Configuration BOARD_BootClockHSRUN **********************
