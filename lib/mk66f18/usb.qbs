@@ -18,13 +18,13 @@ StaticLibrary {
     cpp.defines: "SDK_OS_BAREMETAL"
 
     cpp.includePaths: [
-        "lib/mk66f18/utilities/usb",
-        "lib/mk66f18/middleware/usb/include",
-        "lib/mk66f18/middleware/usb/phy",
-        "lib/mk66f18/middleware/usb/osa",
-        "lib/mk66f18/middleware/usb/device",
-        "lib/mk66f18/middleware/usb/host",
-        "lib/mk66f18/middleware/usb/otg",
+        "utilities/usb",
+        "middleware/usb/include",
+        "middleware/usb/phy",
+        "middleware/usb/osa",
+        "middleware/usb/device",
+        "middleware/usb/host",
+        "middleware/usb/otg",
     ]
     Group {
         name: "utilities"
@@ -71,9 +71,9 @@ StaticLibrary {
         files: ["*.c","*.h"]
     }
 
-    //    Export {
-    //        Depends { name: "cpp" }
-    //        cpp.includePaths: product.cpp.includePaths
-    //        cpp.defines: product.cpp.defines
-    //    }
+    Export {
+        Depends { name: "cpp" }
+        cpp.includePaths: product.cpp.includePaths
+        cpp.defines: product.cpp.defines
+    }
 }
