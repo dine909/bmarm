@@ -188,7 +188,7 @@ const sim_clock_config_t simConfig_BOARD_BootClockHSRUN =
     };
 const osc_config_t oscConfig_BOARD_BootClockHSRUN =
     {
-        .freq = 12000000U,                        /* Oscillator frequency: 12000000Hz */
+        .freq = BOARD_XTAL0_CLK_HZ,                        /* Oscillator frequency: 12000000Hz */
         .capLoad = (OSC_CAP0P),                   /* Oscillator capacity load: 0pF */
         .workMode = kOSC_ModeOscLowPower,         /* Oscillator low power */
         .oscerConfig =
@@ -295,7 +295,7 @@ const sim_clock_config_t simConfig_BOARD_BootClockVLPR =
     };
 const osc_config_t oscConfig_BOARD_BootClockVLPR =
     {
-        .freq = 12000000U,                        /* Oscillator frequency: 12000000Hz */
+        .freq = BOARD_XTAL0_CLK_HZ,                        /* Oscillator frequency: 12000000Hz */
         .capLoad = (OSC_CAP0P),                   /* Oscillator capacity load: 0pF */
         .workMode = kOSC_ModeOscLowPower,         /* Oscillator low power */
         .oscerConfig =
@@ -410,7 +410,7 @@ const sim_clock_config_t simConfig_BOARD_BootClockRUN =
     };
 const osc_config_t oscConfig_BOARD_BootClockRUN =
     {
-        .freq = 12000000U,                        /* Oscillator frequency: 12000000Hz */
+        .freq = BOARD_XTAL0_CLK_HZ,                        /* Oscillator frequency: 12000000Hz */
         .capLoad = (OSC_CAP0P),                   /* Oscillator capacity load: 0pF */
         .workMode = kOSC_ModeOscLowPower,         /* Oscillator low power */
         .oscerConfig =

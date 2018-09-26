@@ -8,6 +8,7 @@ StaticLibrary {
 //        cpp.architecture: "armv4t"
 
     cpp.assemblerFlags: ["-D__STARTUP_CLEAR_BSS", "-D__STARTUP_INITIALIZE_NONCACHEDATA"]
+    cpp.positionIndependentCode: false
 
     cpp.includePaths: ["lib/mk66f18/CMSIS",
         "lib/mk66f18/drivers",

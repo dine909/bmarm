@@ -99,7 +99,7 @@ void EXAMPLE_DSPI_MASTER_IRQHandler(void)
 //            if (masterTxCount < TRANSFER_SIZE)
             {
 //                EXAMPLE_DSPI_MASTER_BASEADDR->PUSHR = masterCommand | masterTxData[masterTxCount];
-                EXAMPLE_DSPI_MASTER_BASEADDR->PUSHR=masterCommand | 0xAA;
+                EXAMPLE_DSPI_MASTER_BASEADDR->PUSHR=masterCommand | 0xAAAA;
 //                ++masterTxCount;
             }
 //            else
@@ -134,17 +134,17 @@ int main(void)
 {
     BOARD_InitPins();
     BOARD_BootClockRUN();
-    BOARD_InitDebugConsole();
+//    BOARD_InitDebugConsole();
 
-    PRINTF("dspi_functional_interrupt start.\r\n");
-    PRINTF("This example use one dspi instance as master and another as slave on one board.\r\n");
-    PRINTF("Master and slave are both use interrupt way.\r\n");
-    PRINTF("Please make sure you make the correct line connection. Basically, the connection is: \r\n");
-    PRINTF("DSPI_master -- DSPI_slave   \r\n");
-    PRINTF("   CLK      --    CLK  \r\n");
-    PRINTF("   PCS      --    PCS  \r\n");
-    PRINTF("   SOUT     --    SIN  \r\n");
-    PRINTF("   SIN      --    SOUT \r\n");
+//    PRINTF("dspi_functional_interrupt start.\r\n");
+//    PRINTF("This example use one dspi instance as master and another as slave on one board.\r\n");
+//    PRINTF("Master and slave are both use interrupt way.\r\n");
+//    PRINTF("Please make sure you make the correct line connection. Basically, the connection is: \r\n");
+//    PRINTF("DSPI_master -- DSPI_slave   \r\n");
+//    PRINTF("   CLK      --    CLK  \r\n");
+//    PRINTF("   PCS      --    PCS  \r\n");
+//    PRINTF("   SOUT     --    SIN  \r\n");
+//    PRINTF("   SIN      --    SOUT \r\n");
 
     uint32_t srcClock_Hz;
     dspi_master_config_t masterConfig;
@@ -153,12 +153,12 @@ int main(void)
     /* Master config */
     masterConfig.whichCtar = kDSPI_Ctar0;
     masterConfig.ctarConfig.baudRate = TRANSFER_BAUDRATE;
-    masterConfig.ctarConfig.bitsPerFrame = 8;
+    masterConfig.ctarConfig.bitsPerFrame = 16;
     masterConfig.ctarConfig.cpol = kDSPI_ClockPolarityActiveHigh;
     masterConfig.ctarConfig.cpha = kDSPI_ClockPhaseFirstEdge;
     masterConfig.ctarConfig.direction = kDSPI_MsbFirst;
-    masterConfig.ctarConfig.pcsToSckDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
-    masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
+    masterConfig.ctarConfig.pcsToSckDelayInNanoSec = 0U;//1000000000U / TRANSFER_BAUDRATE;
+    masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec = 0U;//1000000000U / TRANSFER_BAUDRATE;
     masterConfig.ctarConfig.betweenTransferDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
 
     masterConfig.whichPcs = EXAMPLE_DSPI_MASTER_PCS;
