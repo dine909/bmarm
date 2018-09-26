@@ -64,6 +64,40 @@ Product {
         }
     }
     Rule {
+        id: elf
+        inputs: ["application"]
+        prepare: {
+            var args = [input.filePath, output.filePath];
+            var cmd = new Command("cp", args);
+            cmd.description = "copying elf: "+FileInfo.fileName(input.filePath);
+            cmd.highlight = "linker";
+            return cmd;
+
+        }
+        Artifact {
+            fileTags: ["elf"]
+            filePath: FileInfo.baseName(input.filePath) + ".elf"
+        }
+    }
+    Rule {
+        id: disassmbly
+        inputs: ["application"]
+        prepare: {
+            var args = [input.filePath, '-D','-S'];
+            var cmd = new Command(FileInfo.path(product.cpp.compilerPath) + "/arm-none-eabi-objdump", args);
+            cmd.stdoutFilePath = output.filePath;
+            cmd.description = "Disassembly listing for " + cmd.workingDirectory;
+            cmd.highlight = "disassembler";
+            cmd.silent = false;
+            return cmd;
+
+        }
+        Artifact {
+            fileTags: ["disassembly"]
+            filePath: FileInfo.baseName(input.filePath) + ".lst"
+        }
+    }
+    Rule {
         id: size
         inputs: "application"
         alwaysRun: true
