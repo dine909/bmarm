@@ -166,7 +166,7 @@ uint32_t DSPI_GetInstance(SPI_Type *base)
 void DSPI_SetDummyData(SPI_Type *base, uint8_t dummyData)
 {
     uint32_t instance = DSPI_GetInstance(base);
-    g_dspiDummyData[instance] = dummyData;
+//    g_dspiDummyData[instance] = dummyData;
 }
 
 void DSPI_MasterInit(SPI_Type *base, const dspi_master_config_t *masterConfig, uint32_t srcClock_Hz)

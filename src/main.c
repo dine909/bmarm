@@ -31,9 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#undef __cplusplus
-#define bool int
-#define __null (void*)0
 
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
@@ -46,57 +43,117 @@
  * Definitions
  ******************************************************************************/
 #define EXAMPLE_DSPI_MASTER_BASEADDR SPI0
-#define DSPI_MASTER_CLK_SRC DSPI0_CLK_SRC
-#define DSPI_MASTER_CLK_FREQ CLOCK_GetFreq(DSPI0_CLK_SRC)
-#define EXAMPLE_DSPI_MASTER_PCS_FOR_INIT kDSPI_Pcs0
-#define EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER kDSPI_MasterPcs0
-#define EXAMPLE_DSPI_DEALY_COUNT 0xfffffU
+#define EXAMPLE_DSPI_MASTER_CLK_SRC DSPI0_CLK_SRC
+#define EXAMPLE_DSPI_MASTER_CLK_FREQ CLOCK_GetFreq(DSPI0_CLK_SRC)
+#define EXAMPLE_DSPI_MASTER_IRQ SPI0_IRQn
+#define EXAMPLE_DSPI_MASTER_PCS kDSPI_Pcs0
+#define EXAMPLE_DSPI_MASTER_IRQHandler SPI0_IRQHandler
 
-#define TRANSFER_SIZE 64U         /*! Transfer dataSize */
-#define TRANSFER_BAUDRATE 50000U /*! Transfer baudrate - 500k */
-
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-uint8_t masterRxData[TRANSFER_SIZE] = {0U};
-uint8_t masterTxData[TRANSFER_SIZE] = {0U};
+//#define EXAMPLE_DSPI_SLAVE_BASEADDR SPI1
+//#define EXAMPLE_DSPI_SLAVE_IRQ SPI1_IRQn
+//#define EXAMPLE_DSPI_SLAVE_IRQHandler SPI1_IRQHandler
+#define TRANSFER_SIZE 256U        /*! Transfer dataSize */
+#define TRANSFER_BAUDRATE 500000U /*! Transfer baudrate - 500k */
 
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
 
 /*******************************************************************************
+ * Variables
+ ******************************************************************************/
+volatile uint32_t masterCommand;
+uint32_t masterFifoSize;
+
+dspi_master_handle_t g_m_handle;
+dspi_slave_handle_t g_s_handle;
+
+
+/*******************************************************************************
  * Code
  ******************************************************************************/
 
+void EXAMPLE_DSPI_MASTER_IRQHandler(void)
+{
+//    if (masterRxCount < TRANSFER_SIZE)
+    {
+        while (DSPI_GetStatusFlags(EXAMPLE_DSPI_MASTER_BASEADDR) & kDSPI_RxFifoDrainRequestFlag)
+        {
+            int dummy = DSPI_ReadData(EXAMPLE_DSPI_MASTER_BASEADDR);
+//            ++masterRxCount;
+
+            DSPI_ClearStatusFlags(EXAMPLE_DSPI_MASTER_BASEADDR, kDSPI_RxFifoDrainRequestFlag);
+
+//            if (masterRxCount == TRANSFER_SIZE)
+//            {
+//                break;
+//            }
+        }
+    }
+
+//    if (masterTxCount < TRANSFER_SIZE)
+    {
+        while ((DSPI_GetStatusFlags(EXAMPLE_DSPI_MASTER_BASEADDR) & kDSPI_TxFifoFillRequestFlag) )//&&
+//               ((masterTxCount - masterRxCount) < masterFifoSize))
+        {
+//            if (masterTxCount < TRANSFER_SIZE)
+            {
+//                EXAMPLE_DSPI_MASTER_BASEADDR->PUSHR = masterCommand | masterTxData[masterTxCount];
+                EXAMPLE_DSPI_MASTER_BASEADDR->PUSHR=masterCommand | 0xAA;
+//                ++masterTxCount;
+            }
+//            else
+//            {
+//                break;
+//            }
+
+            /* Try to clear the TFFF; if the TX FIFO is full this will clear */
+            DSPI_ClearStatusFlags(EXAMPLE_DSPI_MASTER_BASEADDR, kDSPI_TxFifoFillRequestFlag);
+        }
+    }
+
+    /* Check if we're done with this transfer.*/
+//    if ((masterTxCount == TRANSFER_SIZE) && (masterRxCount == TRANSFER_SIZE))
+//    {
+//        /* Complete the transfer and disable the interrupts */
+//        DSPI_DisableInterrupts(EXAMPLE_DSPI_MASTER_BASEADDR,
+//                               kDSPI_RxFifoDrainRequestInterruptEnable | kDSPI_TxFifoFillRequestInterruptEnable);
+//    }
+    /* Add for ARM errata 838869, affects Cortex-M4, Cortex-M4F Store immediate overlapping
+  exception return operation might vector to incorrect interrupt */
+#if defined __CORTEX_M && (__CORTEX_M == 4U)
+    __DSB();
+#endif
+}
+
+
+/*!
+ * @brief Main function
+ */
 int main(void)
 {
     BOARD_InitPins();
     BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
 
-    PRINTF("DSPI board to board polling example.\r\n");
-    PRINTF("This example use one board as master and another as slave.\r\n");
-    PRINTF("Master uses polling way and slave uses interrupt way. \r\n");
+    PRINTF("dspi_functional_interrupt start.\r\n");
+    PRINTF("This example use one dspi instance as master and another as slave on one board.\r\n");
+    PRINTF("Master and slave are both use interrupt way.\r\n");
     PRINTF("Please make sure you make the correct line connection. Basically, the connection is: \r\n");
     PRINTF("DSPI_master -- DSPI_slave   \r\n");
     PRINTF("   CLK      --    CLK  \r\n");
-    PRINTF("   PCS      --    PCS \r\n");
+    PRINTF("   PCS      --    PCS  \r\n");
     PRINTF("   SOUT     --    SIN  \r\n");
     PRINTF("   SIN      --    SOUT \r\n");
-    PRINTF("   GND      --    GND \r\n");
 
     uint32_t srcClock_Hz;
-    uint32_t errorCount;
-    uint32_t loopCount = 1U;
-    uint32_t i;
     dspi_master_config_t masterConfig;
-    dspi_transfer_t masterXfer;
+    //    dspi_slave_config_t slaveConfig;
 
     /* Master config */
     masterConfig.whichCtar = kDSPI_Ctar0;
     masterConfig.ctarConfig.baudRate = TRANSFER_BAUDRATE;
-    masterConfig.ctarConfig.bitsPerFrame = 8U;
+    masterConfig.ctarConfig.bitsPerFrame = 8;
     masterConfig.ctarConfig.cpol = kDSPI_ClockPolarityActiveHigh;
     masterConfig.ctarConfig.cpha = kDSPI_ClockPhaseFirstEdge;
     masterConfig.ctarConfig.direction = kDSPI_MsbFirst;
@@ -104,7 +161,7 @@ int main(void)
     masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
     masterConfig.ctarConfig.betweenTransferDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
 
-    masterConfig.whichPcs = EXAMPLE_DSPI_MASTER_PCS_FOR_INIT;
+    masterConfig.whichPcs = EXAMPLE_DSPI_MASTER_PCS;
     masterConfig.pcsActiveHighOrLow = kDSPI_PcsActiveLow;
 
     masterConfig.enableContinuousSCK = false;
@@ -112,87 +169,48 @@ int main(void)
     masterConfig.enableModifiedTimingFormat = false;
     masterConfig.samplePoint = kDSPI_SckToSin0Clock;
 
-    srcClock_Hz = DSPI_MASTER_CLK_FREQ;
+    srcClock_Hz = EXAMPLE_DSPI_MASTER_CLK_FREQ;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, srcClock_Hz);
+
+    NVIC_SetPriority(EXAMPLE_DSPI_MASTER_IRQ, 1U);
+
+
+    /* Enable the NVIC for DSPI peripheral. */
+    EnableIRQ(EXAMPLE_DSPI_MASTER_IRQ);
+    //    EnableIRQ(EXAMPLE_DSPI_SLAVE_IRQ);
+
+
+    /*Fill up the slave Tx data*/
+    /* Start master transfer*/
+    dspi_command_data_config_t commandData;
+    commandData.isPcsContinuous = false;
+    commandData.whichCtar = kDSPI_Ctar0;
+    commandData.whichPcs = EXAMPLE_DSPI_MASTER_PCS;
+    commandData.isEndOfQueue = false;
+    commandData.clearTransferCount = false;
+
+    masterCommand = DSPI_MasterGetFormattedCommand(&commandData);
+
+    masterFifoSize = FSL_FEATURE_DSPI_FIFO_SIZEn(EXAMPLE_DSPI_MASTER_BASEADDR);
+//    masterTxCount = 0;
+//    masterRxCount = 0;
+
+    DSPI_StopTransfer(EXAMPLE_DSPI_MASTER_BASEADDR);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
+    DSPI_ClearStatusFlags(EXAMPLE_DSPI_MASTER_BASEADDR, kDSPI_AllStatusFlag);
+
+    /*Enable master RX interrupt*/
+//    DSPI_EnableInterrupts(EXAMPLE_DSPI_MASTER_BASEADDR, kDSPI_RxFifoDrainRequestInterruptEnable);
+
+    /*Fill up the master Tx data*/
+
+    /* Start DSPI transafer.*/
+    DSPI_StartTransfer(EXAMPLE_DSPI_MASTER_BASEADDR);
+    DSPI_EnableInterrupts(EXAMPLE_DSPI_MASTER_BASEADDR, kDSPI_TxFifoFillRequestInterruptEnable);
+
+
 
     while (1)
     {
-        /* Set up the transfer data */
-        for (i = 0U; i < TRANSFER_SIZE; i++)
-        {
-            masterTxData[i] = (i + loopCount) % 256U;
-            masterRxData[i] = 0U;
-        }
-
-        /* Print out transmit buffer */
-        PRINTF("\r\n Master transmit:\r\n");
-        for (i = 0U; i < TRANSFER_SIZE; i++)
-        {
-            /* Print 16 numbers in a line */
-            if ((i & 0x0FU) == 0U)
-            {
-                PRINTF("\r\n");
-            }
-            PRINTF(" %02X", masterTxData[i]);
-        }
-        PRINTF("\r\n");
-
-        /* Start master transfer, send data to slave */
-        masterXfer.txData = masterTxData;
-        masterXfer.rxData = NULL;
-        masterXfer.dataSize = TRANSFER_SIZE;
-        masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
-        DSPI_MasterTransferBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &masterXfer);
-
-        /* Delay to wait slave is ready */
-        for (i = 0U; i < EXAMPLE_DSPI_DEALY_COUNT; i++)
-        {
-            __NOP();
-        }
-
-        /* Start master transfer, receive data from slave */
-        masterXfer.txData = NULL;
-        masterXfer.rxData = masterRxData;
-        masterXfer.dataSize = TRANSFER_SIZE;
-        masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
-        DSPI_MasterTransferBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &masterXfer);
-
-        errorCount = 0U;
-        for (i = 0U; i < TRANSFER_SIZE; i++)
-        {
-            if (masterTxData[i] != masterRxData[i])
-            {
-                errorCount++;
-            }
-        }
-
-        if (errorCount == 0U)
-        {
-            PRINTF(" \r\nDSPI transfer all data matched! \r\n");
-
-            /* Print out receive buffer */
-            PRINTF("\r\n Master received:\r\n");
-            for (i = 0U; i < TRANSFER_SIZE; i++)
-            {
-                /* Print 16 numbers in a line */
-                if ((i & 0x0FU) == 0U)
-                {
-                    PRINTF("\r\n");
-                }
-                PRINTF(" %02X", masterRxData[i]);
-            }
-            PRINTF("\r\n");
-        }
-        else
-        {
-            PRINTF("\r\nError occured in DSPI transfer ! \r\n");
-        }
-
-        /* Wait for press any key */
-        PRINTF("\r\n Press any key to run again\r\n");
-        GETCHAR();
-
-        /* Increase loop count to change transmit buffer */
-        loopCount++;
     }
 }
