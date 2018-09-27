@@ -15,10 +15,11 @@ Module {
                         "-O","elf32-littlearm",
                         "-B","arm",
                         "--rename-section",".data=.rodata",
-                        input.filePath,
+                        FileInfo.fileName(input.filePath),
                         output.filePath];
 
             var cmd = new Command(FileInfo.path(product.cpp.compilerPath) + "/arm-none-eabi-objcopy", args);
+            cmd.workingDirectory=FileInfo.path(input.filePath);
             cmd.description = "converting data:  " + FileInfo.fileName(input.filePath);
             cmd.highlight = "linker";
             return cmd;
