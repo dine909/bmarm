@@ -53,6 +53,7 @@ Project  {
         Depends { name: "cpp" }
         Depends { name: "mk66f18" }
         Depends { name: "usb"}
+        Depends { name: "dmp"}
 
         //    Depends { name: "teensy36" }
         type: ["application", "hex","bin","size", "elf", "disassembly"]
