@@ -68,7 +68,7 @@ Project {
         ]
 
 
-        cpp.cLanguageVersion: "c11"
+        cpp.cxxLanguageVersion: "c++14"
         cpp.linkerFlags: ["--gc-sections", "-static", "-z", "muldefs","-lm","-lc","-lgcc","-lnosys"]
 
 
