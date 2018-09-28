@@ -25,6 +25,8 @@ StaticLibrary {
         "middleware/usb/device",
         "middleware/usb/host",
         "middleware/usb/otg",
+        "../../src"
+
     ]
     Group {
         name: "utilities"
