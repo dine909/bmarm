@@ -4,7 +4,6 @@ import qbs.FileInfo
 import "platform/teensy36/teensy36.qbs" as Board
 
 Board {
-    qbsSearchPaths: ["platform/teensy36"]
     projectName : "template"
     projectFiles : [
         "*.c",
