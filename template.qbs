@@ -9,7 +9,7 @@ Board {
         "*.c",
         "*.cpp",
         "*.h",
-        "*.dmp"
+//        "*.bin"
     ]
 
     USE_USB_device: false
