@@ -24,6 +24,7 @@ StaticLibrary {
         "middleware/usb/osa",
         "middleware/usb/device",
         "middleware/usb/host",
+        "middleware/usb/host/class",
         "middleware/usb/otg",
         "../../src"
 
@@ -64,6 +65,12 @@ StaticLibrary {
         name: "host"
         condition: host
         prefix: "middleware/usb/host/"
+        files: ["*.c","*.h"]
+    }
+    Group {
+        name: "class"
+        condition: host
+        prefix: "middleware/usb/host/class/"
         files: ["*.c","*.h"]
     }
     Group {
