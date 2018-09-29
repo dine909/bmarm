@@ -16,7 +16,6 @@ StaticLibrary {
 
     //    cpp.defines: [ { return (freertos ? "" : "USB_STACK_BM")} ]
     cpp.defines: "SDK_OS_BAREMETAL"
-    cpp.positionIndependentCode: false
 
     cpp.includePaths: [
         "utilities/usb",

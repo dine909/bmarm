@@ -79,6 +79,7 @@ Project {
             cpp.assemblerFlags: product.cpp.assemblerFlags
             cpp.driverFlags: product.cpp.driverFlags
             cpp.commonCompilerFlags: product.cpp.commonCompilerFlags
+            cpp.positionIndependentCode: product.cpp.positionIndependentCode
             //            cpp.architecture: product.cpp.architecture
             cpp.linkerFlags:product.cpp.linkerFlags
 

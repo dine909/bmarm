@@ -29,7 +29,7 @@ Project  {
 
         //        targetName: targetFile
         consoleApplication: true
-        cpp.positionIndependentCode: false
+
         cpp.linkerFlags: ["-Map=" + product.destinationDirectory + "/" +product.name + ".map"]
         cpp.includePaths: [
             "board",
