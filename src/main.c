@@ -74,6 +74,7 @@ void SysTick_DelayTicks(uint32_t n)
 /*!
  * @brief Main function
  */
+//__attribute__ ((section(".text.$m_nvm")))
 int main(void)
 {
     /* Define the init structure for the output LED pin*/

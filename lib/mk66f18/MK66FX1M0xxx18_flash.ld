@@ -63,6 +63,7 @@ MEMORY
   m_interrupts          (RX)  : ORIGIN = 0x00000000, LENGTH = 0x00000400
   m_flash_config        (RX)  : ORIGIN = 0x00000400, LENGTH = 0x00000010
   m_text                (RX)  : ORIGIN = 0x00000410, LENGTH = 0x000FFBF0
+/*  m_nvm                 (RX)  : ORIGIN = 0x10000000, LENGTH = 0x00040000*/
   m_data                (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00010000
   m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00030000
 }
@@ -84,6 +85,13 @@ SECTIONS
     KEEP(*(.FlashConfig))    /* Flash Configuration Field (FCF) */
     . = ALIGN(4);
   } > m_flash_config
+
+/*  .text_nvm :
+  {
+      FILL(0xff)
+      *(.text.$m_nvm*)
+
+  } > m_nvm*/
 
   /* The program code and other data goes into internal flash */
   .text :
