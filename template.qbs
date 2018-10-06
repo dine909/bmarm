@@ -39,18 +39,3 @@ Project {
         }
     }
 }
-
-    //Board {
-    //    projectName : "template"
-    //    projectFiles : [
-    //        "*.c",
-    //        "*.cpp",
-    //        "*.h",
-    ////        "*.bin"
-    //    ]
-
-    //    USE_USB_device: false
-    //    USE_USB_host: false
-    //    USE_USB_otg: false
-
-    //}
