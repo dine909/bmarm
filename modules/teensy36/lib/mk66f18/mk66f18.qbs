@@ -34,7 +34,7 @@ Project {
             "utilities"
         ]
 
-        cpp.defines: { return ["CPU_MK66FX1M0VLQ18","TWR_K65F180M","TOWER"].concat(qbs.buildVariant === "debug"?"DEBUG":"NDEBUG")}
+        cpp.defines: { return ["CPU_MK66FX1M0VLQ18","IS_BARE_METAL"].concat(qbs.buildVariant === "debug"?"DEBUG":"NDEBUG")}
 
         Group {
             name: "sdk"

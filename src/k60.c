@@ -31,6 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #undef __cplusplus
+#ifdef CPU_MK66FX1M0VLQ18
 
 #include "board.h"
 #include "fsl_gpio.h"
@@ -74,8 +75,8 @@ void SysTick_DelayTicks(uint32_t n)
 /*!
  * @brief Main function
  */
-//__attribute__ ((section(".text.$m_nvm")))
-int main(void)
+__attribute__ ((section(".textnvm")))
+int mcuBoot(void)
 {
     /* Define the init structure for the output LED pin*/
     gpio_pin_config_t led_config = {
@@ -104,3 +105,4 @@ int main(void)
         GPIO_PortToggle(BOARD_LED_GPIO, 1u << BOARD_LED_GPIO_PIN);
     }
 }
+#endif
