@@ -84,6 +84,7 @@ int main(void)
 
     /* Board pin init */
     BOARD_InitPins();
+    BOARD_BootClockRUN();
 
     /* Init output LED GPIO. */
     GPIO_PinInit(BOARD_LED_GPIO, BOARD_LED_GPIO_PIN, &led_config);
