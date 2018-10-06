@@ -7,7 +7,7 @@ Project {
     minimumQbsVersion: "1.7.1"
     name:"template"
 
-    property bool isArm: !(qbs.targetOS.contains("linux") || qbs.targetOS.contains("macos") || qbs.targetOS.contains("windows"))
+    property bool isArm: qbs.targetPlatform===""
 
     teensy36 {
         name: "teensy36"
@@ -22,8 +22,10 @@ Project {
         type: ["application", "hex","bin","size", "elf", "disassembly"]
         cpp.positionIndependentCode: false
 
+
         property string mapName:  {return project.isArm?"-Map":"-map";}
         cpp.linkerFlags: [mapName,  product.destinationDirectory + "/" +product.name + ".map"]
+
         cpp.cxxLanguageVersion:"c++14"
 
         Group {
