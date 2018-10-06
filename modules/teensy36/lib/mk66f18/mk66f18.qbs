@@ -45,6 +45,7 @@ Project {
                 "*/*.cpp",
                 "*/*.h",
             ]
+//            cpp.driverFlags:["-fpermissive"].concat(product.cpp.driverFlags)
         }
 
         cpp.driverFlags: [

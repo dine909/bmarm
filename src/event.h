@@ -19,12 +19,14 @@
 #ifndef _event_h_
 #define _event_h_
 
-#include <stdio.h>
-#include "stdint.h"
+#include <cstdio>
+#include <cstdint>
 
-typedef uint_fast32_t uint;
+#define EVENT_SCHEDULER_REALTIME
 
-typedef uint_fast32_t event_clock_t;
+using uint = uint_fast32_t;
+
+using event_clock_t = uint_fast32_t;
 //typedef enum {EVENT_CLOCK_PHI1 = 0, EVENT_CLOCK_PHI2 = 1} event_phase_t;
 #define EVENT_CONTEXT_MAX_PENDING_EVENTS 0x100
 
@@ -34,8 +36,8 @@ class Event
 
 private:
     const char * const m_name;
-    class EventContext *m_context;
-    event_clock_t m_clk;
+    class EventContext *m_context{};
+    event_clock_t m_clk{};
 
     /* This variable is set by the event context
        when it is scheduled */
@@ -43,28 +45,31 @@ private:
 
     /* Link to the next and previous events in the
        list.  */
-    Event *m_next, *m_prev;
+    Event *m_next{}, *m_prev{};
 
 public:
     Event(const char * const name)
         : m_name(name),
           m_pending(false) {}
-    ~Event() {}
+    ~Event() = default;
 
-    virtual void event (void) = 0;
+    virtual void event () = 0;
     bool    pending () { return m_pending; }
     void    cancel  ();
     void    schedule(EventContext &context, event_clock_t cycles);
+    const char* name(){
+        return m_name;
+    }
 };
 
 template< class This >
 class EventCallback: public Event
 {
 private:
-    typedef void (This::*Callback) ();
+    using Callback = void (This::*)();
     This          &m_this;
     Callback const m_callback;
-    void event(void) { (m_this.*m_callback) (); }
+    void event() override { (m_this.*m_callback) (); }
 
 public:
     EventCallback (const char * const name, This &_this, Callback callback)
@@ -94,11 +99,11 @@ private:
     uint  m_events_future;
 
 private:
-    void event (void);
+    void event () override;
 
 protected:
-    void schedule (Event &event, event_clock_t cycles);
-    void cancel   (Event &event)
+    void schedule (Event &event, event_clock_t cycles) override;
+    void cancel   (Event &event) override
     {
         event.m_pending      = false;
         event.m_prev->m_next = event.m_next;
@@ -107,27 +112,30 @@ protected:
     }
 
 public:
-    EventScheduler (const char * const name);
-    void reset     (void);
+    EventScheduler (const char *  name);
+    void reset     ();
 
-    void clock (void)
+    void clock ()
     {
-//        m_clk++;
+        Event &e = *m_next;
+#ifdef EVENT_SCHEDULER_REALTIME
+        m_clk++;
+        if(m_clk < m_next->m_clk)
+            return;
 //        while (m_events && (m_clk >= m_next->m_clk))
 //            dispatch (*m_next);
-        Event &e = *m_next;
+#else
         m_clk = e.m_clk;
-        cancel (e);
         //printf ("Event \"%s\"\n", e.m_name);
+#endif
+        cancel (e);
         e.event();
     }
 
-    // Get time with respect to a specific clock phase
-    event_clock_t getTime () const
+    event_clock_t getTime () const override
     {   return m_clk; }
-    event_clock_t getTime (event_clock_t clock) const
+    event_clock_t getTime (event_clock_t clock) const override
     {   return ((getTime () - clock) << 1) >> 1; } // 31 bit res.
-//    event_phase_t phase () const { return (event_phase_t) (m_clk & 1); }
 };
 
 inline void Event::schedule (EventContext &context, event_clock_t cycles)

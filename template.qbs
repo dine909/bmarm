@@ -27,6 +27,7 @@ Project {
         cpp.linkerFlags: [mapName,  product.destinationDirectory + "/" +product.name + ".map"]
 
         cpp.cxxLanguageVersion:"c++14"
+        cpp.cLanguageVersion:"c11"
 
         Group {
             name: "application"

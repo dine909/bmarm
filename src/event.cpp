@@ -98,7 +98,7 @@ void EventScheduler::reset (void)
     m_clk  = 0;
     m_events = 0;
     m_events_future = 0;
-    event();
+//    event();
 }
 
 // Add event to ordered pending queue
