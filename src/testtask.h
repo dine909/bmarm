@@ -1,9 +1,9 @@
 #ifndef TESTTASK_H
 #define TESTTASK_H
 
-#include <stdio.h>
+#include <cstdio>
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include "event.h"
 
@@ -12,7 +12,7 @@ using namespace std;
 class TestTask : public Event
 {
     EventContext &eventContext;
-    uint32_t cy{};
+    uint32_t cy;
 public:
     TestTask(EventContext *context, const char* name,uint32_t cy) :
         Event (name),
@@ -24,7 +24,7 @@ public:
 
     // Event interface
 public:
-    inline void event()
+    inline void event() override
     {
         cout << name() << ": " << eventContext.getTime() << endl;
 

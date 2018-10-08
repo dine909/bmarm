@@ -24,9 +24,8 @@ Project {
 
 
         property string mapName:  {return project.isArm?"-Map":"-map";}
-        cpp.linkerFlags: [mapName,  product.destinationDirectory + "/" +product.name + ".map"]
-
-        cpp.cxxLanguageVersion:"c++14"
+        cpp.linkerFlags: [mapName,  product.destinationDirectory + "/" +product.name + ".map",]
+        cpp.cxxLanguageVersion:"c++11"
         cpp.cLanguageVersion:"c11"
 
         Group {

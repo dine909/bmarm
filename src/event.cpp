@@ -52,7 +52,7 @@
  *
  ***************************************************************************/
 
-#include <string.h>
+#include <cstring>
 #include "event.h"
 
 #define EVENT_TIMEWARP_COUNT 0x0FFFFF
@@ -83,10 +83,10 @@ void EventScheduler::event ()
 //    m_timeWarp.m_pending = true;
 }
 
-void EventScheduler::reset (void)
+void EventScheduler::reset ()
 {   // Remove all events
     Event *e = m_next;
-    uint   count = m_events;
+//    uint   count = m_events;
     m_pending = false;
     while (e->m_pending)
     {

@@ -19,14 +19,14 @@
 #ifndef _event_h_
 #define _event_h_
 
-#include <cstdio>
-#include <cstdint>
+#include <stdio.h>
+#include <stdint.h>
 
 #define EVENT_SCHEDULER_REALTIME
 
-using uint = uint_fast32_t;
+using uint = uint32_t;
 
-using event_clock_t = uint_fast32_t;
+using event_clock_t = uint32_t;
 //typedef enum {EVENT_CLOCK_PHI1 = 0, EVENT_CLOCK_PHI2 = 1} event_phase_t;
 #define EVENT_CONTEXT_MAX_PENDING_EVENTS 0x100
 
@@ -36,8 +36,8 @@ class Event
 
 private:
     const char * const m_name;
-    class EventContext *m_context{};
-    event_clock_t m_clk{};
+    class EventContext *m_context;
+    event_clock_t m_clk;
 
     /* This variable is set by the event context
        when it is scheduled */
@@ -45,13 +45,13 @@ private:
 
     /* Link to the next and previous events in the
        list.  */
-    Event *m_next{}, *m_prev{};
+    Event *m_next, *m_prev;
 
 public:
     Event(const char * const name)
         : m_name(name),
           m_pending(false) {}
-    ~Event() = default;
+    ~Event() = default;;
 
     virtual void event () = 0;
     bool    pending () { return m_pending; }
@@ -113,23 +113,27 @@ protected:
 
 public:
     EventScheduler (const char *  name);
-    void reset     ();
+    void reset ();
 
     void clock ()
     {
-        Event &e = *m_next;
 #ifdef EVENT_SCHEDULER_REALTIME
         m_clk++;
-        if(m_clk < m_next->m_clk)
-            return;
-//        while (m_events && (m_clk >= m_next->m_clk))
-//            dispatch (*m_next);
+
+        while(m_clk == m_next->m_clk)
+        {
+            Event &e = *m_next;
+            cancel (e);
+            e.event();
+        }
 #else
+        Event &e = *m_next;
         m_clk = e.m_clk;
-        //printf ("Event \"%s\"\n", e.m_name);
-#endif
         cancel (e);
         e.event();
+        //printf ("Event \"%s\"\n", e.m_name);
+#endif
+
     }
 
     event_clock_t getTime () const override
