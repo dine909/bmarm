@@ -1,7 +1,8 @@
 import qbs
 import qbs.FileInfo
 
-import "modules/teensy36/teensy36.qbs" as teensy36
+import "modules/vendor/freescale/mk66f18/mk66f18.qbs" as mculib
+//import "modules/arm/cmsis/cmsis.qbs" as mculib
 
 Project {
     minimumQbsVersion: "1.7.1"
@@ -9,16 +10,17 @@ Project {
 
     property bool isArm: qbs.targetPlatform===""
 
-    teensy36 {
-        name: "teensy36"
+    mculib {
+        name: "mculib"
         condition: isArm
     }
 
     CppApplication {
         Depends {
-            name: "teensy36"
+            name: "mculib"
             condition: project.isArm
         }
+
         type: ["application", "hex","bin","size", "elf", "disassembly"]
         cpp.positionIndependentCode: false
 
