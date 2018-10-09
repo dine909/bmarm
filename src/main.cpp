@@ -13,7 +13,7 @@ extern "C" int mcuBoot(void);
 int main(int argc,char**argv)
 {
 #ifdef IS_BARE_METAL
-//    mcuBoot();
+    mcuBoot();
 #endif
     while(1){
     }

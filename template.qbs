@@ -1,7 +1,7 @@
 import qbs
 import qbs.FileInfo
 
-import "modules/vendor/freescale/mk66f18/mk66f18.qbs" as mculib
+//import "modules/vendor/freescale/mk66f18/mk66f18.qbs" as mculib
 //import "modules/arm/cmsis/cmsis.qbs" as mculib
 
 Project {
@@ -10,14 +10,14 @@ Project {
 
     property bool isArm: qbs.targetPlatform===""
 
-    mculib {
-        name: "mculib"
-        condition: isArm
-    }
+//    mculib {
+//        name: "mculib"
+//        condition: isArm
+//    }
 
     CppApplication {
         Depends {
-            name: "mculib"
+            name: "board_teensy36"
             condition: project.isArm
         }
 
