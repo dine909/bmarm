@@ -13,7 +13,7 @@ Module{
     ]
 
     Group {
-        name: "LPC4088 QuickStart Board"
+        name: "Board LPC4088 QuickStart"
         prefix: "src/"
         files: [
            "*.c",

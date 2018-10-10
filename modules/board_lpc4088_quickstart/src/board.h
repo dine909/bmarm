@@ -1,3 +1,13 @@
+#ifndef BOARDCONFIG_H
+#define BOARDCONFIG_H
 
-extern "C" void SystemSetupClocking(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+void SystemSetupClocking(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

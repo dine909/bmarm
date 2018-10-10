@@ -13,7 +13,7 @@ Module{
     ]
 
     Group {
-        name: "Teensy 3.6 Board"
+        name: "Board Teensy 3.6"
         prefix: "src/"
         files: [
             "*/*.c",      "*.c",

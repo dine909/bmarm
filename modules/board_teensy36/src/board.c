@@ -42,6 +42,7 @@
 #if defined BOARD_USE_CODEC
 #include "fsl_dialog7212.h"
 #endif
+#include "clock_config.h"
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -60,6 +61,7 @@ codec_config_t boardCodecConfig = {
 
 void SystemSetupClocking(){
 
+BOARD_BootClockRUN();
 
 }
 
