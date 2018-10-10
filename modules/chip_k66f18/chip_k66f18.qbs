@@ -5,6 +5,7 @@ Module{
     Depends { name: "lib_cmsis" }
 
     cpp.defines:  [
+        "CORE_M4",
         "CPU_MK66FX1M0VLQ18",
     ]
 

@@ -35,7 +35,8 @@
  */
 
 /* Build for 407x/8x chip family */
-#define CHIP_LPC407X_8X
+//#define CORE_M3
+//#define CHIP_LPC407X_8X
 
 /* Build for RMII interface */
 #define USE_RMII

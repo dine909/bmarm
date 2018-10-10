@@ -7,19 +7,34 @@ Module{
     property string chip: "none"
 
     Properties {
-        name: "Compile config for " + chip_lpc17xx_lpc40xx.chip
         condition: chip_lpc17xx_lpc40xx.chip.contains("LPC408") ||
                    chip_lpc17xx_lpc40xx.chip.contains("LPC407")
-
         cpp.defines:  [
+            "CORE_M4",
             "CHIP_LPC407X_8X",
-            "BOARD_CHIP_".concat(chip)
-        ]
+            "CHIP_LPC40XX",
+            "BOARD_CHIP_".concat(chip),
 
+        ]
         cpp.driverFlags: [
             "-mcpu=cortex-m4"   ,
             "-mfloat-abi=hard",
             "-mfpu=fpv4-sp-d16",
+            "-mthumb",
+
+        ]
+    }
+    Properties {
+        condition: chip_lpc17xx_lpc40xx.chip.contains("LPC17")
+        cpp.defines:  [
+            "CORE_M3",
+            "CHIP_LPC175X_6X",
+            "BOARD_CHIP_".concat(chip),
+        ]
+        cpp.driverFlags: [
+            "-mcpu=cortex-m3"   ,
+//            "-mfloat-abi=hard",
+//            "-mfpu=fpv4-sp-d16",
             "-mthumb",
         ]
     }
