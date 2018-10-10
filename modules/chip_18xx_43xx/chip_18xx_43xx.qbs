@@ -32,6 +32,8 @@ Module{
         name: "sdk"
         files: [
             "startup/*.c",
+            "libled/*.c",
+            "lpc_chip/*.c",
             "*/*.s",
 //            "*/*.S",
 //            "*/*.c",

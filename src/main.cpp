@@ -1,6 +1,7 @@
 
 #include "vendor_system.h"
 #include "led.h"
+#include "board.h"
 
 
 volatile uint32_t g_systickCounter=0;
@@ -19,8 +20,9 @@ extern "C" void SysTick_Handler()
 //__attribute__ ((section(".textnvm")))
 int main()
 {
-    //    BOARD_InitPins();
-    //    BOARD_BootClockRUN();
+    SystemInit();
+    SystemSetupClocking();
+
     SystemCoreClockUpdate();
     initLeds();
 
@@ -30,6 +32,8 @@ int main()
         {
         }
     }
+    while(1){
 
+    }
     return 0;
 }

@@ -36,5 +36,5 @@ void initLeds()
 void setLed(uint32_t ledid, uint32_t state)
 {
     BOARD_LED led=leds[ledid];
-    GPIO_PinWrite(led.gpio, led.pin,state );
+    GPIO_PinWrite(led.gpio, led.pin,state^led.invert );
 }

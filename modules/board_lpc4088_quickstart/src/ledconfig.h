@@ -1,9 +1,12 @@
 #ifndef LEDCONFIG_H
 #define LEDCONFIG_H
-#include "led.h"
+#include "chip_led.h"
 
 BOARD_LED leds[]={
-    PORTC,GPIOC,5u
+    1,18,1,
+    0,13,1,
+    1,13,0,
+    2,19,0,
 };
 
 
