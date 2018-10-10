@@ -5,7 +5,7 @@ Module{
     Depends { name: "cpp" }
 
     Depends {
-        name: "chip_mk66f18"
+        name: "chip_18xx_43xx"
     }
 
     cpp.includePaths: [
@@ -13,12 +13,12 @@ Module{
     ]
 
     Group {
-        name: "Teensy 3.6 Board"
+        name: "LPC4088 QuickStart Board"
         prefix: "src/"
         files: [
-            "*/*.c",      "*.c",
-            "*/*.cpp",    "*.cpp",
-            "*/*.h",      "*.h",
+           "*.c",
+           "*.cpp",
+           "*.h",
         ]
     }
 }

@@ -77,17 +77,13 @@ void BOARD_InitPins(void)
     /* Port B Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortB);
 
-    /* Port C Clock Gate Control: Clock enabled */
-    CLOCK_EnableClock(kCLOCK_PortC);
-
     /* PORTB16 (pin E10) is configured as UART0_RX */
+
     PORT_SetPinMux(PORTB, 16U, kPORT_MuxAlt3);
 
     /* PORTB17 (pin E9) is configured as UART0_TX */
     PORT_SetPinMux(PORTB, 17U, kPORT_MuxAlt3);
 
-    /* PORTC5 (pin ??) is configured as PTC5 */
-    PORT_SetPinMux(PORTC, 5u, kPORT_MuxAsGpio);
 
     SIM->SOPT5 = ((SIM->SOPT5 &
                    /* Mask bits to zero which are setting */

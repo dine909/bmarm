@@ -10,7 +10,15 @@ Module{
     ]
 
     //            type: ["application", "hex","bin","size", "elf", "disassembly"]
-
+    cpp.includePaths: [
+        path+"/include",
+    ]
+    Group {
+        name: "sdk"
+        files: [
+            "include/*.h",
+        ]
+    }
     Rule {
         id: hex
         inputs: ["application"]

@@ -5,7 +5,7 @@ Module{
     Depends { name: "lib_cmsis" }
 
     cpp.defines:  [
-        "CPU_MK66FX1M0VLQ18",
+        "CHIP_LPC407X_8X",
     ]
 
     cpp.driverFlags: [
@@ -16,32 +16,33 @@ Module{
     ]
 
     cpp.assemblerFlags: [
-                    "-D__STARTUP_CLEAR_BSS",
-                    "-D__STARTUP_INITIALIZE_NONCACHEDATA",
+//                    "-D__STARTUP_CLEAR_BSS",
+//                    "-D__STARTUP_INITIALIZE_NONCACHEDATA",
     ]
 
     cpp.includePaths: [
         path+"/include",
-        path+"/cmsis",
-        path+"/drivers",
         path+"/startup",
-        path+"/utilities",
+        path+"/lpc_ip",
+        path+"/lpc_chip",
         path+"/libled"
     ]
 
     Group {
         name: "sdk"
         files: [
-            "*/*.S",
-            "*/*.c",
-            "*/*.cpp",
+            "startup/*.c",
+            "*/*.s",
+//            "*/*.S",
+//            "*/*.c",
+//            "*/*.cpp",
             "*/*.h",
         ]
     }
 
     Group {
         name: "linker scripts"
-        files: ["linker/MK66FX1M0xxx18_flash.ld"]
+        files: ["linker/*.ld"]
         fileTags: ["linkerscript"]
     }
 }

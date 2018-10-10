@@ -6,10 +6,6 @@ Module {
     Depends { name: "cpp" }
     Depends { name: "armbuild" }
 
-    cpp.assemblerFlags: [
-        //            "-D__STARTUP_CLEAR_BSS",
-        //            "-D__STARTUP_INITIALIZE_NONCACHEDATA",
-    ]
     cpp.positionIndependentCode: false
 
     cpp.includePaths: [
@@ -29,13 +25,11 @@ Module {
         //            cpp.driverFlags:["-fpermissive"].concat(product.cpp.driverFlags)
     }
     cpp.driverFlags: [
-        "-mcpu=cortex-m4"   ,
         "--specs=nano.specs",
         "--specs=nosys.specs",
 //        "-mfloat-abi=hard",
 //        "-mfpu=fpv4-sp-d16",
         "-fno-exceptions",
-        "-mthumb",
         "-mapcs",
         "-MMD",
         "-MP",
@@ -54,7 +48,8 @@ Module {
     //        cpp.cxxLanguageVersion: "c++14"
     cpp.linkerFlags: [
         "--gc-sections",
-        "-static", "-z", "muldefs",
+        "-static",
+        "-z", "muldefs",
         "-lm","-lc","-lgcc","-lnosys"
     ]
     //    Group {
