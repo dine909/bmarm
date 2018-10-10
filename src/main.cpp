@@ -1,8 +1,7 @@
-
+#ifdef IS_BARE_METAL
 #include "vendor_system.h"
 #include "led.h"
 #include "board.h"
-
 
 volatile uint32_t g_systickCounter=0;
 
@@ -17,12 +16,13 @@ extern "C" void SysTick_Handler()
     g_systickCounter++;
 }
 
+#endif
 //__attribute__ ((section(".textnvm")))
 int main()
 {
-    SystemInit();
+#ifdef IS_BARE_METAL
+//    SystemInit();
     SystemSetupClocking();
-
     SystemCoreClockUpdate();
     initLeds();
 
@@ -32,8 +32,12 @@ int main()
         {
         }
     }
+#endif
+
     while(1){
 
     }
+
+
     return 0;
 }

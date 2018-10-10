@@ -5,9 +5,6 @@ Module{
     Depends { name: "cpp" }
 
 
-    cpp.defines:  [
-        "__QBS_ARMBUILD",
-    ]
 
     //            type: ["application", "hex","bin","size", "elf", "disassembly"]
     cpp.includePaths: [

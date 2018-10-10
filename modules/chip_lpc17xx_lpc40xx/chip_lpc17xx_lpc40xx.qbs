@@ -6,12 +6,14 @@ Module{
 
     property string chip: "none"
 
-    Group {
-        name: "Compile config for " + chip_18xx_43xx.chip
-        condition: chip_18xx_43xx.chip.contains("LPC408") ||
-                   chip_18xx_43xx.chip.contains("LPC407")
+    Properties {
+        name: "Compile config for " + chip_lpc17xx_lpc40xx.chip
+        condition: chip_lpc17xx_lpc40xx.chip.contains("LPC408") ||
+                   chip_lpc17xx_lpc40xx.chip.contains("LPC407")
+
         cpp.defines:  [
             "CHIP_LPC407X_8X",
+            "BOARD_CHIP_".concat(chip)
         ]
 
         cpp.driverFlags: [
@@ -21,10 +23,6 @@ Module{
             "-mthumb",
         ]
     }
-
-    cpp.defines:  [
-        "BOARD_CHIP_".concat(chip)
-    ]
 
     cpp.includePaths: [
         path+"/include",

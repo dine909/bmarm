@@ -3,9 +3,9 @@ import qbs.FileInfo
 
 Module{
     Depends { name: "cpp" }
-    Depends { name: "chip_18xx_43xx" }
+    Depends { name: "chip_lpc17xx_lpc40xx" }
 
-    chip_18xx_43xx.chip: "LPC4088"
+    chip_lpc17xx_lpc40xx.chip: "LPC4088"
 
 
     cpp.includePaths: [

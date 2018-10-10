@@ -5,7 +5,7 @@ Module{
     Depends { name: "cpp" }
 
     Depends {
-        name: "chip_mk66f18"
+        name: "chip_k66f18"
     }
 
     cpp.includePaths: [
