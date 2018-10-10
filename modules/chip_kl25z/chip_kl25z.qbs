@@ -11,9 +11,8 @@ Module{
     ]
 
     cpp.driverFlags: [
-        "-mcpu=cortex-m0plus"   ,
-//        "-mfloat-abi=hard",
-//        "-mfpu=fpv4-sp-d16",
+        "-mcpu=cortex-m0plus",
+        "-mfloat-abi=soft",
         "-mthumb",
     ]
 
