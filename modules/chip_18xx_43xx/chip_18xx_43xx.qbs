@@ -4,20 +4,26 @@ Module{
     Depends { name: "cpp" }
     Depends { name: "lib_cmsis" }
 
+    property string chip: "none"
+
+    Group {
+        name: "Compile config for " + chip_18xx_43xx.chip
+        condition: chip_18xx_43xx.chip.contains("LPC408") ||
+                   chip_18xx_43xx.chip.contains("LPC407")
+        cpp.defines:  [
+            "CHIP_LPC407X_8X",
+        ]
+
+        cpp.driverFlags: [
+            "-mcpu=cortex-m4"   ,
+            "-mfloat-abi=hard",
+            "-mfpu=fpv4-sp-d16",
+            "-mthumb",
+        ]
+    }
+
     cpp.defines:  [
-        "CHIP_LPC407X_8X",
-    ]
-
-    cpp.driverFlags: [
-        "-mcpu=cortex-m4"   ,
-        "-mfloat-abi=hard",
-        "-mfpu=fpv4-sp-d16",
-        "-mthumb",
-    ]
-
-    cpp.assemblerFlags: [
-//                    "-D__STARTUP_CLEAR_BSS",
-//                    "-D__STARTUP_INITIALIZE_NONCACHEDATA",
+        "BOARD_CHIP_".concat(chip)
     ]
 
     cpp.includePaths: [
