@@ -38,22 +38,22 @@ Module{
     ]
 
     Group {
-        name: "sdk"
+        name: "LPC SDK"
         files: [
             "startup/*.c",
             "libled/*.c",
             "lpc_chip/*.c",
-            "*/*.s",
-//            "*/*.S",
-//            "*/*.c",
-//            "*/*.cpp",
             "*/*.h",
         ]
     }
 
     Group {
-        name: "linker scripts"
-        files: ["linker/*.ld"]
+        name: "Startup"
+        files: ["cmsis/"+core_cortex.core+"/startup/*.*"]
+    }
+    Group {
+        name: "Linker Scripts"
+        files: ["cmsis/"+core_cortex.core+"/linker/*.ld"]
         fileTags: ["linkerscript"]
     }
 }
