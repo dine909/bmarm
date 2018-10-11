@@ -3,17 +3,14 @@ Module{
 
     Depends { name: "cpp" }
     Depends { name: "lib_cmsis" }
+    Depends { name: "core_cortex" }
+    Depends { name: "core_cortex_fp" }
+
+    core_cortex.core: "m4"
+    core_cortex_fp.fp: "hard"
 
     cpp.defines:  [
-        "CORE_M4",
         "CPU_MK66FX1M0VLQ18",
-    ]
-
-    cpp.driverFlags: [
-        "-mcpu=cortex-m4"   ,
-        "-mfloat-abi=hard",
-        "-mfpu=fpv4-sp-d16",
-        "-mthumb",
     ]
 
     cpp.assemblerFlags: [

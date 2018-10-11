@@ -3,39 +3,29 @@ Module{
 
     Depends { name: "cpp" }
     Depends { name: "lib_cmsis" }
+    Depends { name: "core_cortex" }
+    Depends { name: "core_cortex_fp" }
 
     property string chip: "none"
 
     Properties {
         condition: chip_lpc17xx_lpc40xx.chip.contains("LPC408") ||
                    chip_lpc17xx_lpc40xx.chip.contains("LPC407")
+        core_cortex.core: "m4"
+        core_cortex_fp.fp: "hard"
         cpp.defines:  [
-            "CORE_M4",
             "CHIP_LPC407X_8X",
             "CHIP_LPC40XX",
             "BOARD_CHIP_".concat(chip),
 
         ]
-        cpp.driverFlags: [
-            "-mcpu=cortex-m4"   ,
-            "-mfloat-abi=hard",
-            "-mfpu=fpv4-sp-d16",
-            "-mthumb",
-
-        ]
     }
     Properties {
         condition: chip_lpc17xx_lpc40xx.chip.contains("LPC17")
+        core_cortex.core: "m3"
         cpp.defines:  [
-            "CORE_M3",
             "CHIP_LPC175X_6X",
             "BOARD_CHIP_".concat(chip),
-        ]
-        cpp.driverFlags: [
-            "-mcpu=cortex-m3"   ,
-//            "-mfloat-abi=hard",
-//            "-mfpu=fpv4-sp-d16",
-            "-mthumb",
         ]
     }
 

@@ -3,6 +3,8 @@ Module{
 
     Depends { name: "cpp" }
     Depends { name: "lib_cmsis" }
+    Depends { name: "core_cortex" }
+    Depends { name: "core_cortex_fp" }
 
     property string chip: "none"
 
@@ -10,11 +12,8 @@ Module{
         "CPU_"+chip,
     ]
 
-    cpp.driverFlags: [
-        "-mcpu=cortex-m0plus",
-        "-mfloat-abi=soft",
-        "-mthumb",
-    ]
+    core_cortex.core: "m0plus"
+//    core_cortex_fp.fp: "soft"
 
     cpp.assemblerFlags: [
                     "-D__STARTUP_CLEAR_BSS",
