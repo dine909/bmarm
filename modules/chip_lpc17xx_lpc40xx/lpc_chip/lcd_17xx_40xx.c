@@ -1,8 +1,8 @@
 /*
- * @brief LPC17xx/40xx LCD chip driver
+ * @brief LCD chip driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -31,11 +31,13 @@
 
 #include "chip.h"
 
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
 
-static LCD_CURSOR_SIZE_OPT LCD_Cursor_Size = LCD_CURSOR_64x64;
+static LCD_CURSOR_SIZE_OPT_T LCD_Cursor_Size = LCD_CURSOR_64x64;
 
 /*****************************************************************************
  * Public types/enumerations/variables
@@ -50,27 +52,101 @@ static LCD_CURSOR_SIZE_OPT LCD_Cursor_Size = LCD_CURSOR_64x64;
  ****************************************************************************/
 
 /* Initialize the LCD controller */
-void Chip_LCD_Init(LCD_Config_Type *LCD_ConfigStruct)
+void Chip_LCD_Init(LPC_LCD_T *pLCD, LCD_CONFIG_T *LCD_ConfigStruct)
 {
-	Chip_SYSCON_PCLKEnable(SYSCON_CLK_LCD);
-	IP_LCD_Init(LPC_LCD, LCD_ConfigStruct);
+	uint32_t i, regValue, *pPal;
+	uint32_t pcd;
+
+	/* Enable LCD Clock */
+	Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_LCD);
+
+	/* disable the display */
+	pLCD->CTRL &= ~CLCDC_LCDCTRL_ENABLE;
+
+	/* Setting LCD_TIMH register */
+	regValue = ( ((((LCD_ConfigStruct->PPL / 16) - 1) & 0x3F) << 2)
+				 |         (( (LCD_ConfigStruct->HSW - 1)    & 0xFF) << 8)
+				 |         (( (LCD_ConfigStruct->HFP - 1)    & 0xFF) << 16)
+				 |         (( (LCD_ConfigStruct->HBP - 1)    & 0xFF) << 24) );
+	pLCD->TIMH = regValue;
+
+	/* Setting LCD_TIMV register */
+	regValue = ((((LCD_ConfigStruct->LPP - 1) & 0x3FF) << 0)
+				|        (((LCD_ConfigStruct->VSW - 1) & 0x03F) << 10)
+				|        (((LCD_ConfigStruct->VFP - 1) & 0x0FF) << 16)
+				|        (((LCD_ConfigStruct->VBP - 1) & 0x0FF) << 24) );
+	pLCD->TIMV = regValue;
+
+	/* Generate the clock and signal polarity control word */
+	regValue = 0;
+	regValue = (((LCD_ConfigStruct->ACB - 1) & 0x1F) << 6);
+	regValue |= (LCD_ConfigStruct->IOE & 1) << 14;
+	regValue |= (LCD_ConfigStruct->IPC & 1) << 13;
+	regValue |= (LCD_ConfigStruct->IHS & 1) << 12;
+	regValue |= (LCD_ConfigStruct->IVS & 1) << 11;
+
+	/* Compute clocks per line based on panel type */
+	switch (LCD_ConfigStruct->LCD) {
+	case LCD_MONO_4:
+		regValue |= ((((LCD_ConfigStruct->PPL / 4) - 1) & 0x3FF) << 16);
+		break;
+
+	case LCD_MONO_8:
+		regValue |= ((((LCD_ConfigStruct->PPL / 8) - 1) & 0x3FF) << 16);
+		break;
+
+	case LCD_CSTN:
+		regValue |= (((((LCD_ConfigStruct->PPL * 3) / 8) - 1) & 0x3FF) << 16);
+		break;
+
+	case LCD_TFT:
+	default:
+		regValue |=	 /*1<<26 |*/ (((LCD_ConfigStruct->PPL - 1) & 0x3FF) << 16);
+	}
+
+	/* panel clock divisor */
+	pcd = 5;// LCD_ConfigStruct->pcd;   /* TODO: should be calculated from LCDDCLK */
+	pcd &= 0x3FF;
+	regValue |=  ((pcd >> 5) << 27) | ((pcd) & 0x1F);
+	pLCD->POL = regValue;
+
+	/* disable interrupts */
+	pLCD->INTMSK = 0;
+
+	/* set bits per pixel */
+	regValue = LCD_ConfigStruct->BPP << 1;
+
+	/* set color format RGB */
+	regValue |= LCD_ConfigStruct->color_format << 8;
+	regValue |= LCD_ConfigStruct->LCD << 4;
+	if (LCD_ConfigStruct->Dual == 1) {
+		regValue |= 1 << 7;
+	}
+	pLCD->CTRL = regValue;
+
+	/* clear palette */
+	pPal = (uint32_t *) (&(pLCD->PAL));
+	for (i = 0; i < 128; i++) {
+		*pPal = 0;
+		pPal++;
+	}
 }
 
 /* Shutdown the LCD controller */
-void Chip_LCD_DeInit(void)
+void Chip_LCD_DeInit(LPC_LCD_T *pLCD)
 {
-	Chip_SYSCON_PCLKDisable(SYSCON_CLK_LCD);
+	Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_LCD);
 }
 
 /* Configure Cursor */
-void Chip_LCD_Cursor_Config(LCD_CURSOR_SIZE_OPT cursor_size, bool sync)
+void Chip_LCD_Cursor_Config(LPC_LCD_T *pLCD, LCD_CURSOR_SIZE_OPT_T cursor_size, bool sync)
 {
 	LCD_Cursor_Size = cursor_size;
-	IP_LCD_Cursor_Config(LPC_LCD, cursor_size, sync);
+	pLCD->CRSR_CFG = ((sync ? 1 : 0) << 1) | cursor_size;
 }
 
 /* Write Cursor Image into Internal Cursor Image Buffer */
-void Chip_LCD_Cursor_WriteImage(uint8_t cursor_num, void *Image)
+void Chip_LCD_Cursor_WriteImage(LPC_LCD_T *pLCD, uint8_t cursor_num, void *Image)
 {
 	int i, j;
 	uint32_t *fifoptr, *crsr_ptr = (uint32_t *) Image;
@@ -84,7 +160,7 @@ void Chip_LCD_Cursor_WriteImage(uint8_t cursor_num, void *Image)
 		i = 0;
 		j = 256;
 	}
-	fifoptr = IP_LCD_Cursor_GetImageBufferAddress(LPC_LCD, 0);
+	fifoptr = (void *) &(pLCD->CRSR_IMG[0]);
 
 	/* Copy Cursor Image content to FIFO */
 	for (; i < j; i++) {
@@ -96,10 +172,22 @@ void Chip_LCD_Cursor_WriteImage(uint8_t cursor_num, void *Image)
 }
 
 /* Load LCD Palette */
-void Chip_LCD_LoadPalette(void *palette) {
-	LCD_PALETTE_ENTRY_Type pal_entry, *ptr_pal_entry;
+void Chip_LCD_LoadPalette(LPC_LCD_T *pLCD, void *palette)
+{
+	LCD_PALETTE_ENTRY_T pal_entry, *ptr_pal_entry;
 	uint8_t i, *pal_ptr;
-
+	/* This function supports loading of the color palette from
+	   the C file generated by the bmp2c utility. It expects the
+	   palette to be passed as an array of 32-bit BGR entries having
+	   the following format:
+	   2:0 - Not used
+	   7:3 - Blue
+	   10:8 - Not used
+	   15:11 - Green
+	   18:16 - Not used
+	   23:19 - Red
+	   31:24 - Not used
+	   arg = pointer to input palette table address */
 	ptr_pal_entry = &pal_entry;
 	pal_ptr = (uint8_t *) palette;
 
@@ -115,6 +203,8 @@ void Chip_LCD_LoadPalette(void *palette) {
 		pal_entry.Ru = (*pal_ptr++) >> 3;	/* get red */
 		pal_ptr++;	/* skip over the unused byte */
 
-		IP_LCD_Color_LoadPalette(LPC_LCD, (uint32_t *) &ptr_pal_entry, i);
+		pLCD->PAL[i] = *((uint32_t *) ptr_pal_entry);
 	}
 }
+
+#endif /* defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX) */

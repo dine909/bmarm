@@ -2,7 +2,7 @@
  * @brief LPC17xx/40xx WWDT chip driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -48,8 +48,25 @@
  ****************************************************************************/
 
 /* Initialize the Watchdog timer */
-void Chip_WWDT_Init(void)
+void Chip_WWDT_Init(LPC_WWDT_T *pWWDT)
 {
-	/* Enable watchdog */
-	IP_WWDT_Init(LPC_WWDT);
+	/* Disable watchdog */
+	pWWDT->MOD       = 0;
+	pWWDT->TC        = 0xFF;
+#if defined(WATCHDOG_WINDOW_SUPPORT)
+	pWWDT->WARNINT   = 0xFFFF;
+	pWWDT->WINDOW    = 0xFFFFFF;
+#endif
+}
+
+/* Clear WWDT interrupt status flags */
+void Chip_WWDT_ClearStatusFlag(LPC_WWDT_T *pWWDT, uint32_t status)
+{
+	if (status & WWDT_WDMOD_WDTOF) {
+		pWWDT->MOD &= (~WWDT_WDMOD_WDTOF) & WWDT_WDMOD_BITMASK;
+	}
+
+	if (status & WWDT_WDMOD_WDINT) {
+		pWWDT->MOD |= WWDT_WDMOD_WDINT;
+	}
 }

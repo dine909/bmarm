@@ -1,8 +1,8 @@
 /*
- * @brief Chip inclusion selector file
+ * @brief LPC17xx/LPC40xx basic chip inclusion file
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -32,7 +32,108 @@
 #ifndef __CHIP_H_
 #define __CHIP_H_
 
+#include "lpc_types.h"
 #include "sys_config.h"
+#include "cmsis.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** @ingroup CHIP_17XX_40XX_DRIVER_OPTIONS
+ * @{
+ */
+
+/**
+ * @brief	System oscillator rate
+ * This value is defined externally to the chip layer and contains
+ * the value in Hz for the external oscillator for the board. If using the
+ * internal oscillator, this rate can be 0.
+ */
+extern const uint32_t OscRateIn;
+
+/**
+ * @brief	RTC oscillator rate
+ * This value is defined externally to the chip layer and contains
+ * the value in Hz for the RTC oscillator for the board. This is
+ * usually 32KHz (32768). If not using the RTC, this rate can be 0.
+ */
+extern const uint32_t RTCOscRateIn;
+
+/**
+ * @}
+ */
+
+/** @defgroup SUPPORT_17XX_40XX_FUNC CHIP: LPC17xx/40xx support functions
+ * @ingroup CHIP_17XX_40XX_Drivers
+ * @{
+ */
+
+/**
+ * @brief	Current system clock rate, mainly used for sysTick
+ */
+extern uint32_t SystemCoreClock;
+
+/**
+ * @brief	Update system core clock rate, should be called if the
+ *			system has a clock rate change
+ * @return	None
+ */
+void SystemCoreClockUpdate(void);
+
+/**
+ * @brief	Set up and initialize hardware prior to call to main()
+ * @return	None
+ * @note	Chip_SystemInit() is called prior to the application and sets up
+ * system clocking prior to the application starting.
+ */
+void Chip_SystemInit(void);
+
+/**
+ * @brief	USB Pin and clock initialization
+ * Calling this function will initialize the USB pins and the clock
+ * @return	None
+ * @note	This function will assume that the chip is clocked by an
+ * external crystal oscillator of frequency 12MHz and the Oscillator
+ * is running.
+ */
+void Chip_USB_Init(void);
+
+/**
+ * @brief	Clock and PLL initialization based on the external oscillator
+ * @return	None
+ * @note	This function assumes an external crystal oscillator
+ * frequency of 12MHz.
+ */
+void Chip_SetupXtalClocking(void);
+
+/**
+ * @brief	Clock and PLL initialization based on the internal oscillator
+ * @return	None
+ */
+void Chip_SetupIrcClocking(void);
+
+/**
+ * @}
+ */
+
+#if defined(CHIP_LPC175X_6X) || defined(CHIP_LPC177X_8X)
+
+#ifndef CORE_M3
+#error CORE_M3 is not defined for the LPC17xx architecture
+#error CORE_M3 should be defined as part of your compiler define list
+#endif
+
+#elif defined(CHIP_LPC40XX)
+
+#ifndef CORE_M4
+#error CORE_M4 is not defined for the LPC40xx architecture
+#error CORE_M4 should be defined as part of your compiler define list
+#endif
+
+#elif defined(CHIP_LPC40XX)
+#error CHIP_LPC175X_6X/CHIP_LPC177X_8X/CHIP_LPC40XX is not defined!
+#endif
 
 #if defined(CHIP_LPC175X_6X)
 #include "chip_lpc175x_6x.h"
@@ -40,11 +141,12 @@
 #elif defined(CHIP_LPC177X_8X)
 #include "chip_lpc177x_8x.h"
 
-#elif defined(CHIP_LPC407X_8X)
+#elif defined(CHIP_LPC40XX)
 #include "chip_lpc407x_8x.h"
+#endif
 
-#else
-#error CHIP_LPC175X_6X, CHIP_LPC177X_8X, or CHIP_LPC407X_8X must be defined
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CHIP_H_ */

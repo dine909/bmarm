@@ -1,6 +1,6 @@
 /*
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -30,34 +30,23 @@
 #ifndef __SYS_CONFIG_H_
 #define __SYS_CONFIG_H_
 
-/** @ingroup BOARD_EA_DEVKIT_4088_OPTIONS
- * @{
- */
-
 /* Build for 407x/8x chip family */
-//#define CORE_M3
-//#define CHIP_LPC407X_8X
+//#define CHIP_LPC40XX
 
-/* Build for RMII interface */
-#define USE_RMII
-
-/* Un-comment DEBUG_ENABLE for IO support via the UART */
-//#define DEBUG_ENABLE
-
-/* Board UART used for debug output */
-#define DEBUG_UART LPC_UART0
-
-/* Crystal frequency into device */
-#define CRYSTAL_MAIN_FREQ_IN (12000000)
-
-/* Crystal frequency into device for RTC/32K input */
-#define CRYSTAL_32K_FREQ_IN (32768)
+/* For the LPC4074, the __FPU_PRESENT definition should be set to 0 */
+// #define __FPU_PRESENT 0
 
 /* Enable DMA in SDC driver */
 #define SDC_DMA_ENABLE
 
-/**
- * @}
- */
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void Board_SystemInit();
+void SystemInit(void){
+    Board_SystemInit();
+}
+#ifdef __cplusplus
+}
+#endif
 #endif /* __SYS_CONFIG_H_ */

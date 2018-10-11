@@ -2,7 +2,7 @@
  * @brief LPC17xx/40xx D/A conversion driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -48,11 +48,37 @@
  ****************************************************************************/
 
 /* Initialize the DAC peripheral */
-void Chip_DAC_Init(void)
+void Chip_DAC_Init(LPC_DAC_T *pDAC)
 {
-	/* Reset DAC */
-	Chip_SYSCON_PeriphReset(SYSCON_RESET_DAC);
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+	Chip_SYSCTL_PeriphReset(SYSCTL_RESET_DAC);
+#endif
 
-	/* IP DAC init */
-	IP_DAC_Init(LPC_DAC);
+	/* Set maximum update rate 1MHz */
+	Chip_DAC_SetBias(pDAC, DAC_MAX_UPDATE_RATE_1MHz);
+}
+
+/* Shutdown DAC peripheral */
+void Chip_DAC_DeInit(LPC_DAC_T *pDAC)
+{}
+
+/* Update value to DAC buffer*/
+void Chip_DAC_UpdateValue(LPC_DAC_T *pDAC, uint32_t dac_value)
+{
+	uint32_t tmp;
+
+	tmp = pDAC->CR & DAC_BIAS_EN;
+	tmp |= DAC_VALUE(dac_value);
+	/* Update value */
+	pDAC->CR = tmp;
+}
+
+/* Set Maximum update rate for DAC */
+void Chip_DAC_SetBias(LPC_DAC_T *pDAC, uint32_t bias)
+{
+	pDAC->CR &= ~DAC_BIAS_EN;
+
+	if (bias  == DAC_MAX_UPDATE_RATE_400kHz) {
+		pDAC->CR |= DAC_BIAS_EN;
+	}
 }

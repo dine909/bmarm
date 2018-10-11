@@ -4,7 +4,7 @@
 void setLed(uint32_t ledid, uint32_t state)
 {
     BOARD_LED led=leds[ledid];
-    Chip_GPIO_WritePortBit(led.port,led.pin,state^led.invert);
+    Chip_GPIO_WritePortBit(LPC_GPIO,led.port,led.pin,state^led.invert);
 }
 
 void initLeds()
@@ -12,7 +12,7 @@ void initLeds()
     for(uint32_t i=0;i<sizeof(leds)/sizeof (BOARD_LED);i++)
     {
         BOARD_LED led=leds[i];
-       Chip_GPIO_WriteDirBit(led.port,led.pin, true);
+       Chip_GPIO_WriteDirBit(LPC_GPIO,led.port,led.pin, true);
        setLed(i,0);
     }
 

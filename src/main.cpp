@@ -22,7 +22,7 @@ int main()
 {
 #ifdef IS_BARE_METAL
 //    SystemInit();
-    SystemSetupClocking();
+//    SystemSetupClocking();
     SystemCoreClockUpdate();
     initLeds();
 

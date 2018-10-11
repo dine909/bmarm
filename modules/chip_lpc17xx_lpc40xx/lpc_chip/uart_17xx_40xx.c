@@ -1,8 +1,8 @@
 /*
- * @brief LPC17xx/40xx UART chip driver
+ * @brief LPC11xx UART chip driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -35,13 +35,8 @@
  * Private types/enumerations/variables
  ****************************************************************************/
 
-/** UART Ring buffer declaration*/
-static UART_RingBuffer_Type rb;
-
-/** Current Tx Interrupt enable state */
-static __IO FlagStatus TxIntStat;
-
-FlagStatus ABsyncSts = RESET;
+/* Autobaud status flag */
+STATIC volatile FlagStatus ABsyncSts = RESET;
 
 /*****************************************************************************
  * Public types/enumerations/variables
@@ -51,345 +46,488 @@ FlagStatus ABsyncSts = RESET;
  * Private functions
  ****************************************************************************/
 
-/* Get UART number based on selected UART */
-static UART_ID_Type Chip_UART_Get_UARTNum(LPC_USART_Type *UARTx)
+/* Returns clock for the peripheral block */
+STATIC CHIP_SYSCTL_CLOCK_T Chip_UART_GetClockIndex(LPC_USART_T *pUART)
 {
-	if (UARTx == LPC_UART0) {
-		return UART_0;
+	CHIP_SYSCTL_CLOCK_T clkUART;
+
+	if (pUART == LPC_UART1) {
+		clkUART = SYSCTL_CLOCK_UART1;
 	}
-	else if (UARTx == LPC_UART1) {
-		return UART_1;
+	else if (pUART == LPC_UART2) {
+		clkUART = SYSCTL_CLOCK_UART2;
 	}
-	else if (UARTx == LPC_UART2) {
-		return UART_2;
+	else if (pUART == LPC_UART3) {
+		clkUART = SYSCTL_CLOCK_UART3;
 	}
-	else if (UARTx == LPC_UART3) {
-		return UART_3;
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+	else if (pUART == LPC_UART4) {
+		clkUART = SYSCTL_CLOCK_UART4;
+	}
+#endif
+	else {
+		clkUART = SYSCTL_CLOCK_UART0;
 	}
 
-	return UART_4;
+	return clkUART;
 }
 
-/* Determine UART clock based in selected UART */
-static SYSCON_CLK_T Chip_UART_DetermineClk(LPC_USART_Type *UARTx) {
-	SYSCON_CLK_T uartclk;
+/* UART Autobaud command interrupt handler */
+STATIC void Chip_UART_ABIntHandler(LPC_USART_T *pUART)
+{
+	/* Handle End Of Autobaud interrupt */
+	if((Chip_UART_ReadIntIDReg(pUART) & UART_IIR_ABEO_INT) != 0) {
+        Chip_UART_SetAutoBaudReg(pUART, UART_ACR_ABEOINT_CLR); 
+		Chip_UART_IntDisable(pUART, UART_IER_ABEOINT);
+	    if (ABsyncSts == RESET) {
+	        ABsyncSts = SET;
+        }
+	}
+	
+    /* Handle Autobaud Timeout interrupt */
+	if((Chip_UART_ReadIntIDReg(pUART) & UART_IIR_ABTO_INT) != 0) {
+        Chip_UART_SetAutoBaudReg(pUART, UART_ACR_ABTOINT_CLR); 
+		Chip_UART_IntDisable(pUART, UART_IER_ABTOINT);
+	}
+}
 
-	/* Pick clock for uart BASED ON SELECTED uart */
-	if (UARTx == LPC_UART1) {
-		uartclk = SYSCON_CLK_UART1;
+#if defined(CHIP_LPC175X_6X)
+/* Returns clock ID for the peripheral block */
+STATIC CHIP_SYSCTL_PCLK_T Chip_UART_GetClkIndex(LPC_USART_T *pUART)
+{
+	CHIP_SYSCTL_PCLK_T clkUART;
+
+	if (pUART == LPC_UART1) {
+		clkUART = SYSCTL_PCLK_UART1;
 	}
-	else if (UARTx == LPC_UART2) {
-		uartclk = SYSCON_CLK_UART2;
+	else if (pUART == LPC_UART2) {
+		clkUART = SYSCTL_PCLK_UART2;
 	}
-	else if (UARTx == LPC_UART3) {
-		uartclk = SYSCON_CLK_UART3;
-	}
-	else if (UARTx == LPC_UART4) {
-		uartclk = SYSCON_CLK_UART4;
+	else if (pUART == LPC_UART3) {
+		clkUART = SYSCTL_PCLK_UART3;
 	}
 	else {
-		uartclk = SYSCON_CLK_UART0;
+		clkUART = SYSCTL_PCLK_UART0;
 	}
 
-	return uartclk;
+	return clkUART;
 }
+#endif
 
 /*****************************************************************************
  * Public functions
  ****************************************************************************/
 
-/* Initializes the UARTx peripheral */
-void Chip_UART_Init(LPC_USART_Type *UARTx)
+/* Initializes the pUART peripheral */
+void Chip_UART_Init(LPC_USART_T *pUART)
 {
-	UART_ID_Type UARTPort = Chip_UART_Get_UARTNum(UARTx);
+    uint32_t tmp;
 
+	(void) tmp;
+	
 	/* Enable UART clocking. UART base clock(s) must already be enabled */
-	Chip_SYSCON_PCLKEnable(Chip_UART_DetermineClk(UARTx));
+	Chip_Clock_EnablePeriphClock(Chip_UART_GetClockIndex(pUART));
 
-	IP_UART_Init(UARTx, UARTPort);
+	/* Enable FIFOs by default, reset them */
+	Chip_UART_SetupFIFOS(pUART, (UART_FCR_FIFO_EN | UART_FCR_RX_RS | UART_FCR_TX_RS));
+    
+    /* Disable Tx */
+    Chip_UART_TXDisable(pUART);
+	
+    /* Disable interrupts */
+	pUART->IER = 0;
+	/* Set LCR to default state */
+	pUART->LCR = 0;
+	/* Set ACR to default state */
+	pUART->ACR = 0;
+    /* Set RS485 control to default state */
+	pUART->RS485CTRL = 0;
+	/* Set RS485 delay timer to default state */
+	pUART->RS485DLY = 0;
+	/* Set RS485 addr match to default state */
+	pUART->RS485ADRMATCH = 0;
+	
+    /* Clear MCR */
+    if (pUART == LPC_UART1) {
+		/* Set Modem Control to default state */
+		pUART->MCR = 0;
+		/*Dummy Reading to Clear Status */
+		tmp = pUART->MSR;
+	}
+
+	/* Default 8N1, with DLAB disabled */
+	Chip_UART_ConfigData(pUART, (UART_LCR_WLEN8 | UART_LCR_SBS_1BIT | UART_LCR_PARITY_DIS));
+
+	/* Disable fractional divider */
+	pUART->FDR = 0x10;
 }
 
-/* De-initializes the UARTx peripheral */
-void Chip_UART_DeInit(LPC_USART_Type *UARTx)
+/* De-initializes the pUART peripheral */
+void Chip_UART_DeInit(LPC_USART_T *pUART)
 {
-	UART_ID_Type UARTPort = Chip_UART_Get_UARTNum(UARTx);
+    /* Disable Tx */
+    Chip_UART_TXDisable(pUART);
 
-	IP_UART_DeInit(UARTx, UARTPort);
-
-	/* Disable UART clocking */
-	Chip_SYSCON_PCLKDisable(Chip_UART_DetermineClk(UARTx));
+    /* Disable clock */
+	Chip_Clock_DisablePeriphClock(Chip_UART_GetClockIndex(pUART));
 }
 
-/* Determines best dividers to get a target baud rate */
-Status Chip_UART_SetBaud(LPC_USART_Type *UARTx, uint32_t baudrate)
+/* Enable transmission on UART TxD pin */
+void Chip_UART_TXEnable(LPC_USART_T *pUART)
 {
-	uint32_t uClk;
-
-	/* Get UART clock rate */
-	uClk = Chip_SYSCON_GetPCLKRateFromClk(Chip_UART_DetermineClk(UARTx));
-
-	return IP_UART_SetBaud(UARTx, baudrate, uClk);
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+    if(pUART == LPC_UART4) {
+        pUART->TER2 = UART_TER2_TXEN;
+    }
+    else {
+#endif
+        pUART->TER1 = UART_TER1_TXEN;
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+    }
+#endif
 }
 
-/* Enable/Disable transmission on UART TxD pin */
-void Chip_UART_TxCmd(LPC_USART_Type *UARTx, FunctionalState NewState)
+/* Disable transmission on UART TxD pin */
+void Chip_UART_TXDisable(LPC_USART_T *pUART)
 {
-	UART_ID_Type UARTPort = Chip_UART_Get_UARTNum(UARTx);
-
-	IP_UART_TxCmd(UARTx, UARTPort, NewState);
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+    if(pUART == LPC_UART4) {
+        pUART->TER2 = 0;
+    }
+    else {
+#endif
+        pUART->TER1 = 0;
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+    }
+#endif
 }
 
-/* Get Interrupt Stream Status */
-UART_INT_STATUS_Type Chip_UART_GetIntStatus(LPC_USART_Type *UARTx)
+/* Transmit a byte array through the UART peripheral (non-blocking) */
+int Chip_UART_Send(LPC_USART_T *pUART, const void *data, int numBytes)
 {
-	uint32_t intsrc, tmp, tmp1;
-	UART_INT_STATUS_Type ret = UART_INTSTS_ERROR;
+	int sent = 0;
+	uint8_t *p8 = (uint8_t *) data;
 
-	/* Determine the interrupt source */
-	intsrc = Chip_UART_IntGetStatus(UARTx);
-
-	tmp = intsrc & UART_IIR_INTID_MASK;
-
-	/* Receive Line Status */
-	if (tmp == UART_IIR_INTID_RLS) {
-		/* Check line status */
-		tmp1 = (uint32_t) Chip_UART_GetLineStatus(UARTx);
-		/* Mask out the Receive Ready and Transmit Holding empty status */
-		tmp1 &= (UART_LSR_OE | UART_LSR_PE | UART_LSR_FE \
-				 | UART_LSR_BI | UART_LSR_RXFE);
-		/* If any error exist */
-		if (tmp1) {
-			return UART_INTSTS_ERROR;
-		}
+	/* Send until the transmit FIFO is full or out of bytes */
+	while ((sent < numBytes) &&
+		   ((Chip_UART_ReadLineStatus(pUART) & UART_LSR_THRE) != 0)) {
+		Chip_UART_SendByte(pUART, *p8);
+		p8++;
+		sent++;
 	}
 
-	/* Receive Data Available or Character time-out */
-	if ((tmp == UART_IIR_INTID_RDA) || (tmp == UART_IIR_INTID_CTI)) {
-		ret |= UART_INTSTS_RTR;
+	return sent;
+}
+
+/* Check whether if UART is busy or not */
+FlagStatus Chip_UART_CheckBusy(LPC_USART_T *pUART)
+{
+	if (pUART->LSR & UART_LSR_TEMT) {
+		return RESET;
+	}
+	else {
+		return SET;
+	}
+}
+
+/* Transmit a byte array through the UART peripheral (blocking) */
+int Chip_UART_SendBlocking(LPC_USART_T *pUART, const void *data, int numBytes)
+{
+	int pass, sent = 0;
+	uint8_t *p8 = (uint8_t *) data;
+
+	while (numBytes > 0) {
+		pass = Chip_UART_Send(pUART, p8, numBytes);
+		numBytes -= pass;
+		sent += pass;
+		p8 += pass;
 	}
 
-	/* Transmit Holding Empty */
-	if (tmp == UART_IIR_INTID_THRE) {
-		ret |= UART_INTSTS_RTS;
+	return sent;
+}
+
+/* Read data through the UART peripheral (non-blocking) */
+int Chip_UART_Read(LPC_USART_T *pUART, void *data, int numBytes)
+{
+	int readBytes = 0;
+	uint8_t *p8 = (uint8_t *) data;
+
+	/* Send until the transmit FIFO is full or out of bytes */
+	while ((readBytes < numBytes) &&
+		   ((Chip_UART_ReadLineStatus(pUART) & UART_LSR_RDR) != 0)) {
+		*p8 = Chip_UART_ReadByte(pUART);
+		p8++;
+		readBytes++;
 	}
 
-	if (intsrc & UART_IIR_ABEO_INT) {
-		ret |= UART_INTSTS_ABEO;
+	return readBytes;
+}
+
+/* Read data through the UART peripheral (blocking) */
+int Chip_UART_ReadBlocking(LPC_USART_T *pUART, void *data, int numBytes)
+{
+	int pass, readBytes = 0;
+	uint8_t *p8 = (uint8_t *) data;
+
+	while (readBytes < numBytes) {
+		pass = Chip_UART_Read(pUART, p8, numBytes);
+		numBytes -= pass;
+		readBytes += pass;
+		p8 += pass;
 	}
-	else if (intsrc & UART_IIR_ABTO_INT) {
-		ret |= UART_INTSTS_ABTO;
+
+	return readBytes;
+}
+
+/* Determines and sets best dividers to get a target bit rate */
+uint32_t Chip_UART_SetBaud(LPC_USART_T *pUART, uint32_t baudrate)
+{
+	uint32_t div, divh, divl, clkin;
+
+	/* Determine UART clock in rate without FDR */
+#if defined(CHIP_LPC175X_6X)
+	clkin = Chip_Clock_GetPeripheralClockRate(Chip_UART_GetClkIndex(pUART));
+#else
+	clkin = Chip_Clock_GetPeripheralClockRate();
+#endif
+	div = clkin / (baudrate * 16);
+
+	/* High and low halves of the divider */
+	divh = div / 256;
+	divl = div - (divh * 256);
+
+	Chip_UART_EnableDivisorAccess(pUART);
+	Chip_UART_SetDivisorLatches(pUART, divl, divh);
+	Chip_UART_DisableDivisorAccess(pUART);
+
+	/* Fractional FDR already setup for 1 in UART init */
+
+	return clkin / div;
+}
+
+/* UART receive-only interrupt handler for ring buffers */
+void Chip_UART_RXIntHandlerRB(LPC_USART_T *pUART, RINGBUFF_T *pRB)
+{
+	/* New data will be ignored if data not popped in time */
+	while (Chip_UART_ReadLineStatus(pUART) & UART_LSR_RDR) {
+		uint8_t ch = Chip_UART_ReadByte(pUART);
+		RingBuffer_Insert(pRB, &ch);
 	}
+}
+
+/* UART transmit-only interrupt handler for ring buffers */
+void Chip_UART_TXIntHandlerRB(LPC_USART_T *pUART, RINGBUFF_T *pRB)
+{
+	uint8_t ch;
+
+	/* Fill FIFO until full or until TX ring buffer is empty */
+	while ((Chip_UART_ReadLineStatus(pUART) & UART_LSR_THRE) != 0 &&
+		   RingBuffer_Pop(pRB, &ch)) {
+		Chip_UART_SendByte(pUART, ch);
+	}
+}
+
+/* Populate a transmit ring buffer and start UART transmit */
+uint32_t Chip_UART_SendRB(LPC_USART_T *pUART, RINGBUFF_T *pRB, const void *data, int bytes)
+{
+	uint32_t ret;
+	uint8_t *p8 = (uint8_t *) data;
+
+	/* Don't let UART transmit ring buffer change in the UART IRQ handler */
+	Chip_UART_IntDisable(pUART, UART_IER_THREINT);
+
+	/* Move as much data as possible into transmit ring buffer */
+	ret = RingBuffer_InsertMult(pRB, p8, bytes);
+	Chip_UART_TXIntHandlerRB(pUART, pRB);
+
+	/* Add additional data to transmit ring buffer if possible */
+	ret += RingBuffer_InsertMult(pRB, (p8 + ret), (bytes - ret));
+
+	/* Enable UART transmit interrupt */
+	Chip_UART_IntEnable(pUART, UART_IER_THREINT);
+
 	return ret;
 }
 
-/* UART interrupt service routine */
-void Chip_UART_Interrupt_Handler(LPC_USART_Type *UARTx)
+/* Copy data from a receive ring buffer */
+int Chip_UART_ReadRB(LPC_USART_T *pUART, RINGBUFF_T *pRB, void *data, int bytes)
 {
-	uint8_t tmpc;
-	uint32_t rLen;
-	UART_INT_STATUS_Type Sts = Chip_UART_GetIntStatus(UARTx);
-	if (Sts == UART_INTSTS_ERROR) {
-		return;	/* error */
+	(void) pUART;
+
+	return RingBuffer_PopMult(pRB, (uint8_t *) data, bytes);
+}
+
+/* UART receive/transmit interrupt handler for ring buffers */
+void Chip_UART_IRQRBHandler(LPC_USART_T *pUART, RINGBUFF_T *pRXRB, RINGBUFF_T *pTXRB)
+{
+	/* Handle transmit interrupt if enabled */
+	if (pUART->IER & UART_IER_THREINT) {
+		Chip_UART_TXIntHandlerRB(pUART, pTXRB);
+
+		/* Disable transmit interrupt if the ring buffer is empty */
+		if (RingBuffer_IsEmpty(pTXRB)) {
+			Chip_UART_IntDisable(pUART, UART_IER_THREINT);
+		}
 	}
-	if (Sts & UART_INTSTS_RTR) {	/* ready for Read Data */
-		while (1) {
-			/* Call UART read function in UART driver */
-			rLen = Chip_UART_Receive(UARTx, &tmpc, 1, NONE_BLOCKING);
-			/* If data received */
-			if (rLen) {
-				/* Check if buffer is more space
-				 * If no more space, remaining character will be trimmed out
-				 */
-				if (!__BUF_IS_FULL(rb.rx_head, rb.rx_tail)) {
-					rb.rx[rb.rx_head] = tmpc;
-					__BUF_INCR(rb.rx_head);
+
+	/* Handle receive interrupt */
+	Chip_UART_RXIntHandlerRB(pUART, pRXRB);
+
+    /* Handle Autobaud interrupts */
+    Chip_UART_ABIntHandler(pUART);
+}
+
+/* Determines and sets best dividers to get a target baud rate */
+uint32_t Chip_UART_SetBaudFDR(LPC_USART_T *pUART, uint32_t baudrate)
+
+{
+	uint32_t uClk;
+	uint32_t actualRate = 0, d, m, bestd, bestm, tmp;
+	uint32_t current_error, best_error;
+	uint64_t best_divisor, divisor;
+	uint32_t recalcbaud;
+
+	/* Get Clock rate */
+#if defined(CHIP_LPC175X_6X)
+	uClk = Chip_Clock_GetPeripheralClockRate(Chip_UART_GetClkIndex(pUART));
+#else
+	uClk = Chip_Clock_GetPeripheralClockRate();
+#endif
+    
+	/* In the Uart IP block, baud rate is calculated using FDR and DLL-DLM registers
+	 * The formula is :
+	 * BaudRate= uClk * (mulFracDiv/(mulFracDiv+dividerAddFracDiv) / (16 * (DLL)
+	 * It involves floating point calculations. That's the reason the formulae are adjusted with
+	 * Multiply and divide method.*/
+	/* The value of mulFracDiv and dividerAddFracDiv should comply to the following expressions:
+	 * 0 < mulFracDiv <= 15, 0 <= dividerAddFracDiv <= 15 */
+	best_error = 0xFFFFFFFF;/* Worst case */
+	bestd = 0;
+	bestm = 0;
+	best_divisor = 0;
+	for (m = 1; m <= 15; m++) {
+		for (d = 0; d < m; d++) {
+
+			/*   The result here is a fixed point number.  The integer portion is in the upper 32 bits.
+			 * The fractional portion is in the lower 32 bits.
+			 */
+			divisor = ((uint64_t) uClk << 28) * m / (baudrate * (m + d));
+
+			/*   The fractional portion is the error. */
+			current_error = divisor & 0xFFFFFFFF;
+
+			/*   Snag the integer portion of the divisor. */
+			tmp = divisor >> 32;
+
+			/*   If closer to the next divisor... */
+			if (current_error > ((uint32_t) 1 << 31)) {
+
+				/* Increment to the next divisor... */
+				tmp++;
+
+				/* Now the error is the distance to the next divisor... */
+				current_error = -current_error;
+			}
+
+			/*   Can't use a divisor that's less than 1 or more than 65535. */
+			if ((tmp < 1) || (tmp > 65535)) {
+				/* Out of range */
+				continue;
+			}
+
+			/*   Also, if fractional divider is enabled can't use a divisor that is less than 3. */
+			if ((d != 0) && (tmp < 3)) {
+				/* Out of range */
+				continue;
+			}
+
+			/*   Do we have a new best? */
+			if (current_error < best_error) {
+				best_error = current_error;
+				best_divisor = tmp;
+				bestd = d;
+				bestm = m;
+
+				/*   If error is 0, that's perfect.  We're done. */
+				if (best_error == 0) {
+					break;
 				}
 			}
-			/* no more data */
-			else {
-				break;
-			}
+		}	/* for (d) */
+
+		/*   If error is 0, that's perfect.  We're done. */
+		if (best_error == 0) {
+			break;
 		}
+	}	/* for (m) */
+
+	if (best_divisor == 0) {
+		/* can not find best match */
+		return 0;
 	}
 
-	if (Sts & UART_INTSTS_RTS) {	/* ready for Write Data */
-		/* Disable THRE interrupt */
-		Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, DISABLE);
+	recalcbaud = (uClk >> 4) * bestm / (best_divisor * (bestm + bestd));
 
-		/* Wait for FIFO buffer empty, transfer UART_TX_FIFO_SIZE bytes
-		 * of data or break whenever ring buffers are empty */
-		/* Wait until THR empty */
-		while (Chip_UART_CheckBusy(UARTx) == SET) {}
-
-		while (!__BUF_IS_EMPTY(rb.tx_head, rb.tx_tail)) {
-			/* Move a piece of data into the transmit FIFO */
-			if (Chip_UART_Send(UARTx, (uint8_t *) &rb.tx[rb.tx_tail], 1, NONE_BLOCKING)) {
-				/* Update transmit ring FIFO tail pointer */
-				__BUF_INCR(rb.tx_tail);
-			}
-			else {
-				break;
-			}
-		}
-
-		/* If there is no more data to send, disable the transmit
-		   interrupt - else enable it or keep it enabled */
-		if (__BUF_IS_EMPTY(rb.tx_head, rb.tx_tail)) {
-			Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, DISABLE);
-			// Reset Tx Interrupt state
-			TxIntStat = RESET;
-		}
-		else {
-			/* Set Tx Interrupt state */
-			TxIntStat = SET;
-			Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, ENABLE);
-		}
+	/* reuse best_error to evaluate baud error */
+	if (baudrate > recalcbaud) {
+		best_error = baudrate - recalcbaud;
 	}
-
-	if (Sts & UART_INTSTS_ABEO) {
-		Chip_UART_ABClearIntPending(UARTx, UART_INTSTS_ABEO);
-	}
-	if (Sts & UART_INTSTS_ABTO) {
-		Chip_UART_ABClearIntPending(UARTx, UART_INTSTS_ABTO);
-	}
-	if (ABsyncSts == RESET) {
-		/* Interrupt caused by End of auto-baud */
-		if (Sts & UART_INTSTS_ABEO) {
-			// Disable AB interrupt
-			Chip_UART_IntConfig(UARTx, UART_INTCFG_ABEO, DISABLE);
-			// Set Sync flag
-			ABsyncSts = SET;
-		}
-
-		/* Auto-Baudrate Time-Out interrupt (not implemented) */
-		if (Sts & UART_INTSTS_ABTO) {
-			/* Disable this interrupt - Add your code here */
-			Chip_UART_IntConfig(UARTx, UART_INTCFG_ABTO, DISABLE);
-		}
-	}
-}
-
-/* UART transmit function for interrupt mode (using ring buffers) */
-uint32_t Chip_UART_Interrupt_Transmit(LPC_USART_Type *UARTx, uint8_t *txbuf, uint8_t buflen)
-{
-	uint8_t *data = (uint8_t *) txbuf;
-	uint32_t bytes = 0;
-
-	/* Temporarily lock out UART transmit interrupts during this
-	   read so the UART transmit interrupt won't cause problems
-	   with the index values */
-	Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, DISABLE);
-
-	/* Loop until transmit run buffer is full or until n_bytes
-	   expires */
-	while ((buflen > 0) && (!__BUF_IS_FULL(rb.tx_head, rb.tx_tail))) {
-		/* Write data from buffer into ring buffer */
-		rb.tx[rb.tx_head] = *data;
-		data++;
-
-		/* Increment head pointer */
-		__BUF_INCR(rb.tx_head);
-
-		/* Increment data count and decrement buffer size count */
-		bytes++;
-		buflen--;
-	}
-
-	/*
-	 * Check if current Tx interrupt enable is reset,
-	 * that means the Tx interrupt must be re-enabled
-	 * due to call UART_IntTransmit() function to trigger
-	 * this interrupt type
-	 */
-	if (TxIntStat == RESET) {
-		// Disable THRE interrupt
-		Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, DISABLE);
-
-		/* Wait for FIFO buffer empty, transfer UART_TX_FIFO_SIZE bytes
-		 * of data or break whenever ring buffers are empty */
-		/* Wait until THR empty */
-		while (Chip_UART_CheckBusy(UARTx) == SET) {}
-
-		while (!__BUF_IS_EMPTY(rb.tx_head, rb.tx_tail)) {
-			/* Move a piece of data into the transmit FIFO */
-			if (Chip_UART_Send(UARTx, (uint8_t *) &rb.tx[rb.tx_tail], 1, NONE_BLOCKING)) {
-				/* Update transmit ring FIFO tail pointer */
-				__BUF_INCR(rb.tx_tail);
-			}
-			else {
-				break;
-			}
-		}
-
-		/* If there is no more data to send, disable the transmit
-		   interrupt - else enable it or keep it enabled */
-		if (__BUF_IS_EMPTY(rb.tx_head, rb.tx_tail)) {
-			Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, DISABLE);
-			/* Reset Tx Interrupt state */
-			TxIntStat = RESET;
-		}
-		else {
-			/* Set Tx Interrupt state */
-			TxIntStat = SET;
-			Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, ENABLE);
-		}
-	}
-	/*
-	 * Otherwise, re-enables Tx Interrupt
-	 */
 	else {
-		Chip_UART_IntConfig(UARTx, UART_INTCFG_THRE, ENABLE);
+		best_error = recalcbaud - baudrate;
 	}
 
-	return bytes;
-}
+	best_error = (best_error * 100) / baudrate;
 
-/* UART read function for interrupt mode (using ring buffers) */
-uint32_t Chip_UART_Interrupt_Receive(LPC_USART_Type *UARTx, uint8_t *rxbuf, uint8_t buflen)
-{
-	uint8_t *data = (uint8_t *) rxbuf;
-	uint32_t bytes = 0;
+    /* Update UART registers */
+	Chip_UART_EnableDivisorAccess(pUART);
+	Chip_UART_SetDivisorLatches(pUART, UART_LOAD_DLL(best_divisor), UART_LOAD_DLM(best_divisor));
+	Chip_UART_DisableDivisorAccess(pUART);
 
-	/* Temporarily lock out UART receive interrupts during this
-	   read so the UART receive interrupt won't cause problems
-	   with the index values */
-	Chip_UART_IntConfig(UARTx, UART_INTCFG_RBR, DISABLE);
+	/* Set best fractional divider */
+	pUART->FDR = (UART_FDR_MULVAL(bestm) | UART_FDR_DIVADDVAL(bestd));
 
-	/* Loop until receive buffer ring is empty or
-	    until max_bytes expires */
-	while ((buflen > 0) && (!(__BUF_IS_EMPTY(rb.rx_head, rb.rx_tail)))) {
-		/* Read data from ring buffer into user buffer */
-		*data = rb.rx[rb.rx_tail];
-		data++;
+	/* Return actual baud rate */
+	actualRate = recalcbaud;
 
-		/* Update tail pointer */
-		__BUF_INCR(rb.rx_tail);
-
-		/* Increment data count and decrement buffer size count */
-		bytes++;
-		buflen--;
-	}
-
-	/* Re-enable UART interrupts */
-	Chip_UART_IntConfig(UARTx, UART_INTCFG_RBR, ENABLE);
-
-	return bytes;
-}
-
-/* Reset Tx and Rx ring buffer (head and tail) */
-void Chip_UART_InitRingBuffer(void)
-{
-	TxIntStat = RESET;
-
-	/* Reset ring buf head and tail idx */
-	__BUF_RESET(rb.rx_head);
-	__BUF_RESET(rb.rx_tail);
-	__BUF_RESET(rb.tx_head);
-	__BUF_RESET(rb.tx_tail);
+	return actualRate;
 }
 
 /* UART interrupt service routine */
-FlagStatus Chip_UART_GetABEOStatus(void)
+FlagStatus Chip_UART_GetABEOStatus(LPC_USART_T *pUART)
 {
+	(void) pUART;
 	return ABsyncSts;
 }
+
+/* Start/Stop Auto Baudrate activity */
+void Chip_UART_ABCmd(LPC_USART_T *pUART, uint32_t mode, bool autorestart, FunctionalState NewState)
+{
+    uint32_t tmp = 0;
+
+	if (NewState == ENABLE) {
+		/* Clear DLL and DLM value */
+		pUART->LCR |= UART_LCR_DLAB_EN;
+		pUART->DLL = 0;
+		pUART->DLM = 0;
+		pUART->LCR &= ~UART_LCR_DLAB_EN;
+
+		/* FDR value must be reset to default value */
+		pUART->FDR = 0x10;
+
+		if (mode == UART_ACR_MODE1) {
+			tmp = UART_ACR_START | UART_ACR_MODE;
+		}
+		else {
+			tmp = UART_ACR_START;
+		}
+
+		if (autorestart == true) {
+			tmp |= UART_ACR_AUTO_RESTART;
+		}
+		pUART->ACR = tmp;
+	}
+	else {
+		pUART->ACR = 0;
+	}
+}
+

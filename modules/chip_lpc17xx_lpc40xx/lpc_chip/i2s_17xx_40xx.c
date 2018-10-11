@@ -1,8 +1,8 @@
 /*
- * @brief LPC18xx/43xx I2S driver
+ * @brief LPC17xx/40xx I2S driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -43,40 +43,25 @@
  * Private functions
  ****************************************************************************/
 
-/*****************************************************************************
- * Public functions
- ****************************************************************************/
-
-/* Initialize the I2S interface */
-void Chip_I2S_Init(void)
-{
-	Chip_SYSCON_PCLKEnable(SYSCON_CLK_I2S);
-	IP_I2S_Init(LPC_I2S);
-}
-
-/* Shutdown I2S */
-void Chip_I2S_DeInit(void)
-{
-	IP_I2S_DeInit(LPC_I2S);
-	Chip_SYSCON_PCLKDisable(SYSCON_CLK_I2S);
-}
-
-/* Configure I2S for Audio Format input */
-Status Chip_I2S_Config(uint8_t TRMode, Chip_I2S_Audio_Format_Type *audio_format)
+/* Get divider value */
+STATIC Status getClkDiv(LPC_I2S_T *pI2S, I2S_AUDIO_FORMAT_T *format, uint16_t *pxDiv, uint16_t *pyDiv, uint32_t *pN)
 {
 	uint32_t pClk;
 	uint32_t x, y;
 	uint64_t divider;
 	uint16_t dif;
-	uint16_t x_divide = 0, y_divide = 0;
+	uint16_t xDiv = 0, yDiv = 0;
 	uint32_t N;
 	uint16_t err, ErrorOptimal = 0xFFFF;
 
-	Chip_SYSCON_PCLKEnable(SYSCON_CLK_I2S);
-	pClk = Chip_SYSCON_GetPCLKRateFromClk(SYSCON_CLK_I2S);
+#if defined(CHIP_LPC175X_6X)
+	pClk = Chip_Clock_GetPeripheralClockRate(SYSCTL_PCLK_I2S);
+#else
+	pClk = Chip_Clock_GetPeripheralClockRate();
+#endif
 
 	/* divider is a fixed point number with 16 fractional bits */
-	divider = (((uint64_t) (audio_format->SampleRate) * 2 * (audio_format->WordWidth) * 2) << 16) / pClk;
+	divider = (((uint64_t) (format->SampleRate) * 2 * (format->WordWidth) * 2) << 16) / pClk;
 	/* find N that make x/y <= 1 -> divider <= 2^16 */
 	for (N = 64; N > 0; N--) {
 		if ((divider * N) < (1 << 16)) {
@@ -100,52 +85,176 @@ Status Chip_I2S_Config(uint8_t TRMode, Chip_I2S_Audio_Format_Type *audio_format)
 			err = dif;
 		}
 		if (err == 0) {
-			y_divide = y;
+			yDiv = y;
 			break;
 		}
 		else if (err < ErrorOptimal) {
 			ErrorOptimal = err;
-			y_divide = y;
+			yDiv = y;
 		}
 	}
-	x_divide = ((uint64_t) y_divide * (audio_format->SampleRate) * 2 * (audio_format->WordWidth) * N * 2) / pClk;
-	if (x_divide >= 256) {
-		x_divide = 0xFF;
+	xDiv = ((uint64_t) yDiv * (format->SampleRate) * 2 * (format->WordWidth) * N * 2) / pClk;
+	if (xDiv >= 256) {
+		xDiv = 0xFF;
 	}
-	if (x_divide == 0) {
-		x_divide = 1;
+	if (xDiv == 0) {
+		xDiv = 1;
 	}
-	if (audio_format->WordWidth <= 8) {
-		IP_I2S_SetWordWidth(LPC_I2S, TRMode, I2S_WORDWIDTH_8);
+
+	*pxDiv = xDiv;
+	*pyDiv = yDiv;
+	*pN = N;
+	return SUCCESS;
+}
+
+/*****************************************************************************
+ * Public functions
+ ****************************************************************************/
+
+/* Initialize the I2S interface */
+void Chip_I2S_Init(LPC_I2S_T *pI2S)
+{
+	Chip_Clock_EnablePeriphClock(SYSCTL_CLOCK_I2S);
+}
+
+/* Shutdown I2S */
+void Chip_I2S_DeInit(LPC_I2S_T *pI2S)
+{
+	pI2S->DAI = 0x07E1;
+	pI2S->DAO = 0x87E1;
+	pI2S->IRQ = 0;
+	pI2S->TXMODE = 0;
+	pI2S->RXMODE = 0;
+	pI2S->DMA[I2S_DMA_REQUEST_CHANNEL_1] = 0;
+	pI2S->DMA[I2S_DMA_REQUEST_CHANNEL_2] = 0;
+	Chip_Clock_DisablePeriphClock(SYSCTL_CLOCK_I2S);
+}
+
+/* Configure I2S for Audio Format input */
+Status Chip_I2S_TxConfig(LPC_I2S_T *pI2S, I2S_AUDIO_FORMAT_T *format)
+{
+	uint32_t temp;
+	uint16_t xDiv, yDiv;
+	uint32_t N;
+
+	if (getClkDiv(pI2S, format, &xDiv, &yDiv, &N) == ERROR) {
+		return ERROR;
 	}
-	else if (audio_format->WordWidth <= 16) {
-		IP_I2S_SetWordWidth(LPC_I2S, TRMode, I2S_WORDWIDTH_16);
+
+	temp = pI2S->DAO & (~(I2S_DAO_WORDWIDTH_MASK | I2S_DAO_MONO | I2S_DAO_SLAVE | I2S_DAO_WS_HALFPERIOD_MASK));
+	if (format->WordWidth <= 8) {
+		temp |= I2S_WORDWIDTH_8;
+	}
+	else if (format->WordWidth <= 16) {
+		temp |= I2S_WORDWIDTH_16;
 	}
 	else {
-		IP_I2S_SetWordWidth(LPC_I2S, TRMode, I2S_WORDWIDTH_32);
+		temp |= I2S_WORDWIDTH_32;
 	}
-	IP_I2S_SetMono(LPC_I2S, TRMode, (audio_format->ChannelNumber) == 1 ? I2S_MONO : I2S_STEREO);
-	IP_I2S_SetMasterSlaveMode(LPC_I2S, TRMode, I2S_MASTER_MODE);
-	IP_I2S_SetWS_Halfperiod(LPC_I2S, TRMode, audio_format->WordWidth - 1);
-	IP_I2S_ModeConfig(LPC_I2S, TRMode, I2S_TXMODE_CLKSEL(0), !I2S_TXMODE_4PIN_ENABLE, !I2S_TXMODE_MCENA);
-	IP_I2S_SetBitRate(LPC_I2S, TRMode, N - 1);
-	IP_I2S_SetXYDivider(LPC_I2S, TRMode, x_divide, y_divide);
+
+	temp |= (format->ChannelNumber) == 1 ? I2S_MONO : I2S_STEREO;
+	temp |= I2S_MASTER_MODE;
+	temp |= I2S_DAO_WS_HALFPERIOD(format->WordWidth - 1);
+	pI2S->DAO = temp;
+	pI2S->TXMODE = I2S_TXMODE_CLKSEL(0);
+	pI2S->TXBITRATE = N - 1;
+	pI2S->TXRATE = yDiv | (xDiv << 8);
+	return SUCCESS;
+}
+
+/* Configure I2S for Audio Format input */
+Status Chip_I2S_RxConfig(LPC_I2S_T *pI2S, I2S_AUDIO_FORMAT_T *format)
+{
+	uint32_t temp;
+	uint16_t xDiv, yDiv;
+	uint32_t N;
+
+	if (getClkDiv(pI2S, format, &xDiv, &yDiv, &N) == ERROR) {
+		return ERROR;
+	}
+	temp = pI2S->DAI & (~(I2S_DAI_WORDWIDTH_MASK | I2S_DAI_MONO | I2S_DAI_SLAVE | I2S_DAI_WS_HALFPERIOD_MASK));
+	if (format->WordWidth <= 8) {
+		temp |= I2S_WORDWIDTH_8;
+	}
+	else if (format->WordWidth <= 16) {
+		temp |= I2S_WORDWIDTH_16;
+	}
+	else {
+		temp |= I2S_WORDWIDTH_32;
+	}
+
+	temp |= (format->ChannelNumber) == 1 ? I2S_MONO : I2S_STEREO;
+	temp |= I2S_MASTER_MODE;
+	temp |= I2S_DAI_WS_HALFPERIOD(format->WordWidth - 1);
+	pI2S->DAI = temp;
+	pI2S->RXMODE = I2S_RXMODE_CLKSEL(0);
+	pI2S->RXBITRATE = N - 1;
+	pI2S->RXRATE = yDiv | (xDiv << 8);
 	return SUCCESS;
 }
 
 /* Enable/Disable Interrupt with a specific FIFO depth */
-void Chip_I2S_Int_Cmd(uint8_t TRMode, FunctionalState NewState, uint8_t FIFO_Depth)
+void Chip_I2S_Int_TxCmd(LPC_I2S_T *pI2S, FunctionalState newState, uint8_t depth)
 {
-	IP_I2S_InterruptCmd(LPC_I2S, TRMode, NewState);
-	IP_I2S_SetFIFODepthIRQ(LPC_I2S, TRMode, FIFO_Depth);
+	uint32_t temp;
+	depth &= 0x0F;
+	if (newState == ENABLE) {
+		pI2S->IRQ |= 0x02;
+	}
+	else {
+		pI2S->IRQ &= (~0x02);
+	}
+	temp = pI2S->IRQ & (~I2S_IRQ_TX_DEPTH_MASK);
+	pI2S->IRQ = temp | (I2S_IRQ_TX_DEPTH(depth));
+}
+
+/* Enable/Disable Interrupt with a specific FIFO depth */
+void Chip_I2S_Int_RxCmd(LPC_I2S_T *pI2S, FunctionalState newState, uint8_t depth)
+{
+	uint32_t temp;
+	depth &= 0x0F;
+	if (newState == ENABLE) {
+		pI2S->IRQ |= 0x01;
+	}
+	else {
+		pI2S->IRQ &= (~0x01);
+	}
+	temp = pI2S->IRQ & (~I2S_IRQ_RX_DEPTH_MASK);
+	pI2S->IRQ = temp | (I2S_IRQ_RX_DEPTH(depth));
 }
 
 /* Enable/Disable DMA with a specific FIFO depth */
-void Chip_I2S_DMA_Cmd(uint8_t TRMode,
-					  uint8_t DMANum,
-					  FunctionalState NewState,
-					  uint8_t FIFO_Depth)
+void Chip_I2S_DMA_TxCmd(LPC_I2S_T *pI2S,
+						I2S_DMA_CHANNEL_T dmaNum,
+						FunctionalState newState,
+						uint8_t depth)
 {
-	IP_I2S_SetFIFODepthDMA(LPC_I2S, TRMode, (IP_I2S_DMARequestNumber_Type) DMANum, FIFO_Depth);
-	IP_I2S_DMACmd(LPC_I2S, (IP_I2S_DMARequestNumber_Type) DMANum, TRMode, NewState);
+	/* Set FIFO Level */
+	pI2S->DMA[dmaNum] &= ~(0x0F << 16);
+	pI2S->DMA[dmaNum] |= depth << 16;
+	/* Enable/Disable I2S transmit*/
+	if (newState == ENABLE) {
+		pI2S->DMA[dmaNum] |= 0x02;
+	}
+	else {
+		pI2S->DMA[dmaNum] &= ~0x02;
+	}
+}
+
+/* Enable/Disable DMA with a specific FIFO depth */
+void Chip_I2S_DMA_RxCmd(LPC_I2S_T *pI2S,
+						I2S_DMA_CHANNEL_T dmaNum,
+						FunctionalState newState,
+						uint8_t depth)
+{
+	/* Set FIFO Level */
+	pI2S->DMA[dmaNum] &= ~(0x0F << 8);
+	pI2S->DMA[dmaNum] |= depth << 8;
+	/* Enable/Disable I2S Receive */
+	if (newState == ENABLE) {
+		pI2S->DMA[dmaNum] |= 0x01;
+	}
+	else {
+		pI2S->DMA[dmaNum] &= ~0x01;
+	}
 }

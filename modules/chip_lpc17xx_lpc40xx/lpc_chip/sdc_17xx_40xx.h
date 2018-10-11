@@ -2,7 +2,7 @@
  * @brief LPC17xx/40xx SD Card Interface driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -36,13 +36,287 @@
 extern "C" {
 #endif
 
-/** @defgroup SDC_17XX_40XX CHIP: LPC17xx/40xx SDC driver
+/** @defgroup SDC_17XX_40XX CHIP: LPC17xx/40xx SD Card Interafce driver
  * @ingroup CHIP_17XX_40XX_Drivers
+ * SD/MMC card Interface
  * @{
  */
 
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+
 /**
- * @brief Card bus clock rate definitions
+ * @brief SD/MMC card Interface (SDC) register block structure
+ */
+typedef struct {
+	__IO uint32_t POWER;		/*!< Power Control register */
+	__IO uint32_t CLOCK;		/*!< Clock control regsiter */
+	__IO uint32_t ARGUMENT;		/*!< Command argument register */
+	__IO uint32_t COMMAND;		/*!< Command register */
+	__I  uint32_t RESPCMD;		/*!< Command response register */
+	__I  uint32_t RESPONSE[4];	/*!< Response registers */
+	__IO uint32_t DATATIMER;	/*!< Data timer register */
+	__IO uint32_t DATALENGTH;	/*!< Data length register */
+	__IO uint32_t DATACTRL;		/*!< Data control register */
+	__I  uint32_t DATACNT;		/*!< Data count register */
+	__I  uint32_t STATUS;		/*!< Status register */
+	__O  uint32_t CLEAR;		/*!< Clear register */
+	__IO uint32_t MASK0;		/*!< Mask 0 register */
+	uint32_t RESERVED0[2];
+	__I  uint32_t FIFOCNT;		/*!< FIFO count register */
+	uint32_t RESERVED1[13];
+	__IO uint32_t FIFO[16];		/*!< FIFO registers */
+} LPC_SDC_T;
+
+/**
+ * @brief SDC Power Control Register bit definitions
+ */
+/** SDC Power Control Register Bitmask */
+#define SDC_PWR_BITMASK         ((uint32_t) 0xC3)
+/** SDC Power Control Bit Mask */
+#define SDC_PWR_CTRL_BITMASK    (((uint32_t) 0x03) << 0)
+/** SDC Power Control */
+#define SDC_PWR_CTRL(n)         (((uint32_t) (n & 0x03)) << 0)
+/** SD_CMD Output Control */
+#define SDC_PWR_OPENDRAIN       (((uint32_t) 1) << 6)
+/** Rod Control */
+#define SDC_PWR_ROD             (((uint32_t) 1) << 7)
+
+/**
+ * @brief SDC Clock Control Register bit definitions
+ */
+/** SDC Clock Control Register Bitmask */
+#define SDC_CLOCK_BITMASK       ((uint32_t) 0xFFF)
+/** SDC Clock Divider Bitmask */
+#define SDC_CLOCK_CLKDIV_BITMASK    (((uint32_t) 0xFF ) << 0)
+/** Set SDC Clock Divide value */
+#define SDC_CLOCK_CLKDIV(n)     (((uint32_t) (n & 0x0FF)) << 0)
+
+/**
+ * @brief SDC Command Register bit definitions
+ */
+/** SDC Command Register Bitmask */
+#define SDC_COMMAND_BITMASK     ((uint32_t) 0x7FF)
+/** SDC Command Index Bitmask */
+#define SDC_COMMAND_INDEX_BITMASK   ((uint32_t) 0x3F)
+/** Set SDC Command Index */
+#define SDC_COMMAND_INDEX(n)        ((uint32_t) n & 0x3F)
+/** No response is expected */
+#define SDC_COMMAND_NO_RSP          (((uint32_t) 0 ) << 6)
+/** Short response is expected */
+#define SDC_COMMAND_SHORT_RSP       (((uint32_t) 1 ) << 6)
+/** Long response is expected */
+#define SDC_COMMAND_LONG_RSP        (((uint32_t) 3 ) << 6)
+/** Response bit mask */
+#define SDC_COMMAND_RSP_BITMASK     (((uint32_t) 3 ) << 6)
+/** Mark that command timer is disabled and CPSM waits for interrupt request */
+#define SDC_COMMAND_INTERRUPT       (((uint32_t) 1 ) << 8)
+/** Mark that CPSM waits for CmdPend before starting sending a command*/
+#define SDC_COMMAND_PENDING     (((uint32_t) 1 ) << 9)
+/** Enable CPSM */
+#define SDC_COMMAND_ENABLE          (((uint32_t) 1 ) << 10)
+
+/**
+ * @brief SDC Command Response Register bit definitions
+ */
+/** SDC Command Response value */
+#define SDC_RESPCOMMAND_VAL(n)      ((uint32_t) n & 0x3F)
+
+/**
+ * @brief SDC Data Length Register bit definitions
+ */
+/** SDC Data Length set */
+#define SDC_DATALENGTH_LEN(n)       ((uint32_t) n & 0xFFFF)
+
+/**
+ * @brief SDC Data Control Register bit definitions
+ */
+/** SDC Data Control Register Bitmask */
+#define SDC_DATACTRL_BITMASK        ((uint32_t) 0xFF)
+/** Enable Data Transfer */
+#define SDC_DATACTRL_ENABLE             (((uint32_t) 1 ) << 0)
+/** Mark that Data is transfer from card to controller */
+#define SDC_DATACTRL_DIR_FROMCARD       (((uint32_t) 1 ) << 1)
+/** Mark that Data is transfer from controller to card */
+#define SDC_DATACTRL_DIR_TOCARD         ((uint32_t) 0)
+/** Mark that the transfer mode is Stream Data Transfer */
+#define SDC_DATACTRL_XFER_MODE_STREAM   (((uint32_t) 1 ) << 2)
+/** Mark that the transfer mode is Block Data Transfer */
+#define SDC_DATACTRL_XFER_MODE_BLOCK    ((uint32_t) 0)
+/** Enable DMA */
+#define SDC_DATACTRL_DMA_ENABLE         (((uint32_t) 1 ) << 3)
+/** Set Data Block size */
+#define SDC_DATACTRL_BLOCKSIZE(n)       (((uint32_t) (n & 0x0F) ) << 4)
+/** Get Data Block size value */
+#define SDC_DATACTRL_BLOCKSIZE_VAL(n)   (((uint32_t) 1) << n)
+
+/**
+ * @brief SDC Data Counter Register bit definitions
+ */
+#define SDC_DATACNT_VAL(n)          ((uint32_t) n & 0xFFFF)
+
+/**
+ * @brief SDC Status Register bit definitions
+ */
+/** Command Response received (CRC check failed) */
+#define SDC_STATUS_CMDCRCFAIL     (((uint32_t) 1 ) << 0)
+/** Data block sent/received (CRC check failed). */
+#define SDC_STATUS_DATACRCFAIL     (((uint32_t) 1 ) << 1)
+/** Command response timeout.. */
+#define SDC_STATUS_CMDTIMEOUT     (((uint32_t) 1 ) << 2)
+/** Data timeout. */
+#define SDC_STATUS_DATATIMEOUT     (((uint32_t) 1 ) << 3)
+/** Transmit FIFO underrun error. */
+#define SDC_STATUS_TXUNDERRUN     (((uint32_t) 1 ) << 4)
+/** Receive FIFO overrun error. */
+#define SDC_STATUS_RXOVERRUN     (((uint32_t) 1 ) << 5)
+/** Command response received (CRC check passed). */
+#define SDC_STATUS_CMDRESPEND     (((uint32_t) 1 ) << 6)
+/** Command sent (no response required).*/
+#define SDC_STATUS_CMDSENT     (((uint32_t) 1 ) << 7)
+/** Data end (data counter is zero).*/
+#define SDC_STATUS_DATAEND     (((uint32_t) 1 ) << 8)
+/** Start bit not detected on all data signals in wide bus mode..*/
+#define SDC_STATUS_STARTBITERR     (((uint32_t) 1 ) << 9)
+/** Data block sent/received (CRC check passed).*/
+#define SDC_STATUS_DATABLOCKEND     (((uint32_t) 1 ) << 10)
+/** Command transfer in progress.*/
+#define SDC_STATUS_CMDACTIVE     (((uint32_t) 1 ) << 11)
+/** Data transmit in progress.*/
+#define SDC_STATUS_TXACTIVE     (((uint32_t) 1 ) << 12)
+/** Data receive in progress.*/
+#define SDC_STATUS_RXACTIVE     (((uint32_t) 1 ) << 13)
+/** Transmit FIFO half empty.*/
+#define SDC_STATUS_TXFIFOHALFEMPTY     (((uint32_t) 1 ) << 14)
+/** Receive FIFO half full.*/
+#define SDC_STATUS_RXFIFOHALFFULL     (((uint32_t) 1 ) << 15)
+/** Transmit FIFO full.*/
+#define SDC_STATUS_TXFIFOFULL     (((uint32_t) 1 ) << 16)
+/** Receive FIFO full.*/
+#define SDC_STATUS_RXFIFOFULL     (((uint32_t) 1 ) << 17)
+/** Transmit FIFO empty.*/
+#define SDC_STATUS_TXFIFOEMPTY     (((uint32_t) 1 ) << 18)
+/** Receive FIFO empty.*/
+#define SDC_STATUS_RXFIFOEMPTY     (((uint32_t) 1 ) << 19)
+/** Data available in transmit FIFO.*/
+#define SDC_STATUS_TXDATAAVLBL     (((uint32_t) 1 ) << 20)
+/** Data available in receive FIFO.*/
+#define SDC_STATUS_RXDATAAVLBL     (((uint32_t) 1 ) << 21)
+/** Command Error Status */
+#define SDC_STATUS_CMDERR    (SDC_STATUS_CMDCRCFAIL | SDC_STATUS_CMDTIMEOUT | SDC_STATUS_STARTBITERR)
+/** Data Error Status */
+#define SDC_STATUS_DATAERR    (SDC_STATUS_DATACRCFAIL | SDC_STATUS_DATATIMEOUT | SDC_STATUS_TXUNDERRUN \
+							   | SDC_STATUS_RXOVERRUN | SDC_STATUS_STARTBITERR)
+/** FIFO Status*/
+#define SDC_STATUS_FIFO    (SDC_STATUS_TXFIFOHALFEMPTY | SDC_STATUS_RXFIFOHALFFULL \
+							| SDC_STATUS_TXFIFOFULL  | SDC_STATUS_RXFIFOFULL \
+							| SDC_STATUS_TXFIFOEMPTY | SDC_STATUS_RXFIFOEMPTY \
+							| SDC_STATUS_DATABLOCKEND)
+
+/** Data Transfer Status*/
+#define SDC_STATUS_DATA    (SDC_STATUS_DATAEND )
+
+/**
+ * @brief SDC Clear Register bit definitions
+ */
+/** Clear all status flag*/
+#define SDC_CLEAR_ALL       ((uint32_t) 0x7FF)
+/** Clears CmdCrcFail flag.*/
+#define SDC_CLEAR_CMDCRCFAIL     (((uint32_t) 1 ) << 0)
+/** Clears DataCrcFail flag. */
+#define SDC_CLEAR_DATACRCFAIL     (((uint32_t) 1 ) << 1)
+/** Clears CmdTimeOut flag. */
+#define SDC_CLEAR_CMDTIMEOUT     (((uint32_t) 1 ) << 2)
+/** Clears DataTimeOut flag. */
+#define SDC_CLEAR_DATATIMEOUT     (((uint32_t) 1 ) << 3)
+/** Clears TxUnderrun flag. */
+#define SDC_CLEAR_TXUNDERRUN     (((uint32_t) 1 ) << 4)
+/**Clears RxOverrun flag. */
+#define SDC_CLEAR_RXOVERRUN     (((uint32_t) 1 ) << 5)
+/** Clears CmdRespEnd flag. */
+#define SDC_CLEAR_CMDRESPEND     (((uint32_t) 1 ) << 6)
+/** Clears CmdSent flag.*/
+#define SDC_CLEAR_CMDSENT     (((uint32_t) 1 ) << 7)
+/**Clears DataEnd flag.*/
+#define SDC_CLEAR_DATAEND     (((uint32_t) 1 ) << 8)
+/** Clears StartBitErr flag.*/
+#define SDC_CLEAR_STARTBITERR     (((uint32_t) 1 ) << 9)
+/** Clears DataBlockEnd flag.*/
+#define SDC_CLEAR_DATABLOCKEND     (((uint32_t) 1 ) << 10)
+
+/**
+ * @brief SDC Interrupt Mask Register bit definitions
+ */
+/** Mask CmdCrcFail flag.*/
+#define SDC_MASK0_CMDCRCFAIL     (((uint32_t) 1 ) << 0)
+/** Mask DataCrcFail flag. */
+#define SDC_MASK0_DATACRCFAIL     (((uint32_t) 1 ) << 1)
+/** Mask CmdTimeOut flag. */
+#define SDC_MASK0_CMDTIMEOUT     (((uint32_t) 1 ) << 2)
+/** Mask DataTimeOut flag. */
+#define SDC_MASK0_DATATIMEOUT     (((uint32_t) 1 ) << 3)
+/** Mask TxUnderrun flag. */
+#define SDC_MASK0_TXUNDERRUN     (((uint32_t) 1 ) << 4)
+/** Mask RxOverrun flag. */
+#define SDC_MASK0_RXOVERRUN     (((uint32_t) 1 ) << 5)
+/** Mask CmdRespEnd flag. */
+#define SDC_MASK0_CMDRESPEND     (((uint32_t) 1 ) << 6)
+/** Mask CmdSent flag.*/
+#define SDC_MASK0_CMDSENT     (((uint32_t) 1 ) << 7)
+/** Mask DataEnd flag.*/
+#define SDC_MASK0_DATAEND     (((uint32_t) 1 ) << 8)
+/** Mask StartBitErr flag.*/
+#define SDC_MASK0_STARTBITERR     (((uint32_t) 1 ) << 9)
+/** Mask DataBlockEnd flag.*/
+#define SDC_MASK0_DATABLOCKEND     (((uint32_t) 1 ) << 10)
+/** Mask CmdActive flag.*/
+#define SDC_MASK0_CMDACTIVE     (((uint32_t) 1 ) << 11)
+/** Mask TxActive flag.*/
+#define SDC_MASK0_TXACTIVE     (((uint32_t) 1 ) << 12)
+/** Mask RxActive flag.*/
+#define SDC_MASK0_RXACTIVE     (((uint32_t) 1 ) << 13)
+/** Mask TxFifoHalfEmpty flag.*/
+#define SDC_MASK0_TXFIFOHALFEMPTY     (((uint32_t) 1 ) << 14)
+/** Mask RxFifoHalfFull flag.*/
+#define SDC_MASK0_RXFIFOHALFFULL     (((uint32_t) 1 ) << 15)
+/** Mask TxFifoFull flag.*/
+#define SDC_MASK0_TXFIFOFULL     (((uint32_t) 1 ) << 16)
+/** Mask RxFifoFull flag.*/
+#define SDC_MASK0_RXFIFOFULL     (((uint32_t) 1 ) << 17)
+/** Mask TxFifoEmpty flag.*/
+#define SDC_MASK0_TXFIFOEMPTY     (((uint32_t) 1 ) << 18)
+/** Mask RxFifoEmpty flag.*/
+#define SDC_MASK0_RXFIFOEMPTY     (((uint32_t) 1 ) << 19)
+/** Mask TxDataAvlbl flag.*/
+#define SDC_MASK0_TXDATAAVLBL     (((uint32_t) 1 ) << 20)
+/** Mask RxDataAvlbl flag.*/
+#define SDC_MASK0_RXDATAAVLBL     (((uint32_t) 1 ) << 21)
+/** CMD error interrupt mask */
+#define SDC_MASK0_CMDERR    (SDC_MASK0_CMDCRCFAIL | SDC_MASK0_CMDTIMEOUT | SDC_MASK0_STARTBITERR)
+/** Data Transmit Error interrupt mask */
+#define SDC_MASK0_TXDATAERR    (SDC_MASK0_DATACRCFAIL | SDC_MASK0_DATATIMEOUT | SDC_MASK0_TXUNDERRUN | \
+								SDC_MASK0_STARTBITERR)
+
+/** Data Receive Error interrupt mask */
+#define SDC_MASK0_RXDATAERR    (SDC_MASK0_DATACRCFAIL | SDC_MASK0_DATATIMEOUT | SDC_MASK0_RXOVERRUN | \
+								SDC_MASK0_STARTBITERR)
+/** TX FIFO interrupt mask*/
+#define SDC_MASK0_TXFIFO    (SDC_MASK0_TXFIFOHALFEMPTY | SDC_MASK0_DATABLOCKEND )
+/** RX FIFO interrupt mask*/
+#define SDC_MASK0_RXFIFO    (SDC_MASK0_RXFIFOHALFFULL  | SDC_MASK0_DATABLOCKEND )
+
+/** Data Transfer interrupt mask*/
+#define SDC_MASK0_DATA    (SDC_MASK0_DATAEND | SDC_MASK0_DATABLOCKEND )
+
+/**
+ * @brief SDC FIFO Counter Register bit definitions
+ */
+#define SDC_FIFOCNT_VAL(n)          ((uint32_t) n & 0x7FFF)
+
+/* The number of bytes used to store card status*/
+#define SDC_CARDSTATUS_BYTENUM              ((uint32_t) 4)
+
+/**
+ * @brief SDC Card bus clock rate definitions
  */
 /* Card bus clock in Card Identification Mode */
 #define SDC_IDENT_CLOCK_RATE         (400000)	/* 400KHz */
@@ -50,289 +324,71 @@ extern "C" {
 #define SDC_TRAN_CLOCK_RATE        (20000000)	/* 20MHz */
 
 /**
- * @brief OCR Register definitions
+ * @brief SDC Power Control Options
  */
-/** Support voltage range 2.0-2.1 (this bit is reserved in SDC)*/
-#define SDC_OCR_20_21               (((uint32_t) 1) << 8)
-/** Support voltage range 2.1-2.2 (this bit is reserved in SDC)*/
-#define SDC_OCR_21_22               (((uint32_t) 1) << 9)
-/** Support voltage range 2.2-2.3 (this bit is reserved in SDC)*/
-#define SDC_OCR_22_23               (((uint32_t) 1) << 10)
-/** Support voltage range 2.3-2.4 (this bit is reserved in SDC)*/
-#define SDC_OCR_23_24               (((uint32_t) 1) << 11)
-/** Support voltage range 2.4-2.5 (this bit is reserved in SDC)*/
-#define SDC_OCR_24_25               (((uint32_t) 1) << 12)
-/** Support voltage range 2.5-2.6 (this bit is reserved in SDC)*/
-#define SDC_OCR_25_26               (((uint32_t) 1) << 13)
-/** Support voltage range 2.6-2.7 (this bit is reserved in SDC)*/
-#define SDC_OCR_26_27               (((uint32_t) 1) << 14)
-/** Support voltage range 2.7-2.8 */
-#define SDC_OCR_27_28               (((uint32_t) 1) << 15)
-/** Support voltage range 2.8-2.9*/
-#define SDC_OCR_28_29               (((uint32_t) 1) << 16)
-/** Support voltage range 2.9-3.0 */
-#define SDC_OCR_29_30               (((uint32_t) 1) << 17)
-/** Support voltage range 3.0-3.1 */
-#define SDC_OCR_30_31               (((uint32_t) 1) << 18)
-/** Support voltage range 3.1-3.2 */
-#define SDC_OCR_31_32               (((uint32_t) 1) << 19)
-/** Support voltage range 3.2-3.3 */
-#define SDC_OCR_32_33               (((uint32_t) 1) << 20)
-/** Support voltage range 3.3-3.4 */
-#define SDC_OCR_33_34               (((uint32_t) 1) << 21)
-/** Support voltage range 3.4-3.5 */
-#define SDC_OCR_34_35               (((uint32_t) 1) << 22)
-/** Support voltage range 3.5-3.6 */
-#define SDC_OCR_35_36               (((uint32_t) 1) << 23)
-/** Support voltage range 2.7-3.6 */
-#define SDC_OCR_27_36               ((uint32_t) 0x00FF8000)
-/** Card Capacity Status (CCS). (this bit is reserved in MMC) */
-#define SDC_OCR_HC_CCS              (((uint32_t) 1) << 30)
-/** Card power up status bit */
-#define SDC_OCR_IDLE                (((uint32_t) 1) << 31)
-#define SDC_OCR_BUSY                (((uint32_t) 0) << 31)
+typedef enum SDC_PWR_CTRL {
+	SDC_POWER_OFF = 0,		/*!< Power-off */
+	SDC_POWER_UP = 2,		/*!< Power-up */
+	SDC_POWER_ON = 3,		/*!< Power-on */
+} SDC_PWR_CTRL_T;
 
 /**
- * @brief SD/MMC Standard Command list definitions
+ * @brief SDC Clock Control Options
  */
-
-typedef enum {
-	/* Basic Commands (Class 0) */
-	SDC_CMD0_GO_IDLE_STATE,				/*!< GO_IDLE_STATE(MMC) or RESET(SD) */
-	SDC_CMD1_SEND_OP_COND,				/*!< SEND_OP_COND(MMC)*/
-	SDC_CMD2_ALL_SEND_CID,				/*!< ALL_SEND_CID */
-	SDC_CMD3_SET_RELATIVE_ADDR,				/*!< SET_RELATE_ADDR */
-	SDC_CMD3_SEND_RELATIVE_ADDR,			/*!< SEND_RELATE_ADDR */
-	SDC_CMD7_SELECT_CARD,				/*!< SELECT/DESELECT_CARD */
-	SDC_CMD8_SEND_IF_COND,				/*!<SEND_IF_COND */
-	SDC_CMD9_SEND_CSD,					/*!< SEND_CSD */
-	SDC_CMD12_STOP_TRANSMISSION,			/*!<STOP_TRANSMISSION */
-	SDC_CMD13_SEND_STATUS,				/*!< SEND_STATUS */
-
-	/* Block-Oriented Read Commands (class 2) */
-	SDC_CMD16_SET_BLOCK_LEN,				/*!<SET_BLOCK_LEN */
-	SDC_CMD17_READ_SINGLE_BLOCK,			/*!<READ_SINGLE_BLOCK */
-	SDC_CMD18_READ_MULTIPLE_BLOCK,		/*!<READ_MULTIPLE_BLOCK */
-	/* Class 3 */
-
-	/* Block-Oriented Write Commands (class 4) */
-	SDC_CMD24_WRITE_BLOCK,		/*!<WRITE_BLOCK */
-	SDC_CMD25_WRITE_MULTIPLE_BLOCK,			/*!<WRITE_MULTIPLE_BLOCK */
-
-	/* Erase Commands (class 5) */
-	SDC_CMD32_ERASE_WR_BLK_START,		/*!<ERASE_WR_BLK_START */
-	SDC_CMD33_ERASE_WR_BLK_END,				/*!<ERASE_WR_BLK_END */
-	SDC_CMD38_ERASE,						/*!<ERASE */
-
-	/* Application-Specific Commands (class 8) */
-	SDC_CMD55_APP_CMD,					/*!<APP_CMD, the following will a ACMD */
-	SDC_ACMD6_SET_BUS_WIDTH,			/*!<SET_BUS_WIDTH*/
-	SDC_ACMD13_SEND_SD_STATUS,			/*!<SD_SEND_SD_STATUS*/
-	SDC_ACMD41_SEND_APP_OP_COND,		/*!< SD_SEND_OP_COND */
-
-} SDC_COMMAND_T;
+typedef enum SDC_CLOCK_CTRL {
+	SDC_CLOCK_ENABLE = 8,			/*!< Enable SD Card Bus Clock */
+	SDC_CLOCK_POWER_SAVE = 9,		/*!< Disable SD_CLK output when bus is idle */
+	SDC_CLOCK_DIVIDER_BYPASS = 10,	/*!< Enable bypass of clock divide logic */
+	SDC_CLOCK_WIDEBUS_MODE = 11,	/*!< Enable wide bus mode (SD_DAT[3:0] is used instead of SD_DAT[0]) */
+} SDC_CLOCK_CTRL_T;
 
 /**
- * @brief SD/MMC Command descriptions (Physical Layer Simplified Specification Version 3.01)
+ * @brief SDC Response type
  */
-/*		Command							   type  argument	     response */
-
-/* class 0 */
-#define CMD0_GO_IDLE_STATE           0		/* bc                          */
-#define CMD1_SEND_OP_COND          1		/* bcr  [31:0]  OCR       R3  */
-#define CMD2_ALL_SEND_CID           2		/* bcr                           R2  */
-#define CMD3_SET_RELATIVE_ADDR      3		/* bcr   [31:16] RCA      R1  */
-#define CMD3_SEND_RELATIVE_ADDR     3		/* bcr                           R6  */
-#define CMD4_SET_DSR               4		/* bc   [31:16] DSR            */
-#define CMD7_SELECT_CARD           7		/* ac   [31:16] RCA        R1b  */
-#define CMD8_SEND_IF_COND          8		/* bcr [11:8]VHS [7:0]check pattern      R7  */
-#define CMD9_SEND_CSD              9		/* ac   [31:16] RCA        R2  */
-#define CMD10_SEND_CID             10		/* ac   [31:16] RCA        R2  */
-#define CMD12_STOP_TRANSMISSION    12		/* ac                      R1b */
-#define CMD13_SEND_STATUS          13		/* ac   [31:16] RCA        R1  */
-#define CMD15_GO_INACTIVE_STATE    15		/* ac   [31:16] RCA            */
-
-/* class 2 */
-#define CMD16_SET_BLOCKLEN         16		/* ac   [31:0]  block len  R1  */
-#define CMD17_READ_SINGLE_BLOCK    17		/* adtc [31:0]  data addr  R1  */
-#define CMD18_READ_MULTIPLE_BLOCK  18		/* adtc [31:0]  data addr  R1  */
-
-/* class 4 */
-#define CMD24_WRITE_BLOCK          24		/* adtc [31:0]  data addr  R1  */
-#define CMD25_WRITE_MULTIPLE_BLOCK 25		/* adtc  [31:0]  data addr  R1  */
-
-/* class 5 */
-#define CMD32_ERASE_WR_BLK_START    32		/* ac   [31:0]  data addr  R1  */
-#define CMD33_ERASE_WR_BLK_END      33		/* ac   [31:0]  data addr  R1  */
-#define CMD38_ERASE                 38		/* ac                      R1b */
-
-/* class 8 */
-#define CMD55_APP_CMD              55		/* ac   [31:16] RCA        R1  */
-
-/* Application commands */
-#define ACMD6_SET_BUS_WIDTH         6		/* ac   [1:0]   bus width  R1   */
-#define ACMD13_SEND_SD_STATUS       13		/* ac   ......................... R1   */
-#define ACMD41_SD_SEND_OP_COND      41		/* bcr [30]HCS [28]XPC [24]S18R [23:0]  OCR        R3  */
+typedef enum SDC_RESPONSE {
+	SDC_NO_RESPONSE = SDC_COMMAND_NO_RSP,		/*!< No response */
+	SDC_SHORT_RESPONSE = SDC_COMMAND_SHORT_RSP,	/*!< Short response */
+	SDC_LONG_RESPONSE = SDC_COMMAND_LONG_RSP,	/*!< Long response */
+} SDC_RESPONSE_T;
 
 /**
- * @brief SD/MMC Response type definitions
+ * @brief SDC Data Transfer Direction definitions
  */
-#define CMDRESP_R1_TYPE         (SDC_SHORT_RESPONSE)
-#define CMDRESP_R1b_TYPE        (SDC_SHORT_RESPONSE)
-#define CMDRESP_R2_TYPE         (SDC_LONG_RESPONSE)
-#define CMDRESP_R3_TYPE         (SDC_SHORT_RESPONSE)
-#define CMDRESP_R6_TYPE         (SDC_SHORT_RESPONSE)
-#define CMDRESP_R7_TYPE         (SDC_SHORT_RESPONSE)
+typedef enum SDC_TRANSFER_DIR {
+	SDC_TRANSFER_DIR_FROMCARD = SDC_DATACTRL_DIR_FROMCARD,	/*!< Transfer from card */
+	SDC_TRANSFER_DIR_TOCARD = SDC_DATACTRL_DIR_TOCARD,		/*!< Transfer to card */
+} SDC_TRANSFER_DIR_T;
 
 /**
- * @brief Card Status (coded in 32 bits) in R1 & R1b Response definitions
+ * @brief SDC Data Transfer Mode definitions
  */
-/** The command's argument was out of the allowed range for this card. */
-#define SDC_CARD_STATUS_OUT_OF_RANGE    (((uint32_t) 1 ) << 31)
-/** A misaligned address which did not match the block length was used in the command. */
-#define SDC_CARD_STATUS_ADDRESS_ERROR   (((uint32_t) 1 ) << 30)
-/** The transferred block length is not allowed for this card, or the number of transferred bytes does not match
-   the block length.*/
-#define SDC_CARD_STATUS_BLOCK_LEN_ERROR (((uint32_t) 1 ) << 29)
-/**An error in the sequence of erase commands occurred.*/
-#define SDC_CARD_STATUS_ERASE_SEQ_ERROR (((uint32_t) 1 ) << 28)
-/**An invalid selection of write-blocks for erase occurred.*/
-#define SDC_CARD_STATUS_ERASE_PARAM_ERROR (((uint32_t) 1 ) << 27)
-/**Set when the host attempts to write to a protected block or to the temporary or permanent write protected card.*/
-#define SDC_CARD_STATUS1_WP_VIOLATION    (((uint32_t) 1 ) << 26)
-/**When set, signals that the card is locked by the host */
-#define SDC_CARD_STATUS_SDC_IS_LOCKED  (((uint32_t) 1 ) << 25)
-/** Set when a sequence or password error has been detected in lock/unlock card command.*/
-#define SDC_CARD_STATUS_LOCK_UNLOCK_FAILED   (((uint32_t) 1 ) << 24)
-/** The CRC check of the previous command failed.*/
-#define SDC_CARD_STATUS_COM_CRC_ERROR   (((uint32_t) 1 ) << 23)
-/** Command not legal for the card state*/
-#define SDC_CARD_STATUS_ILLEGAL_COMMAND (((uint32_t) 1 ) << 22)
-/**Card internal ECC was applied but failed to correct the data. */
-#define SDC_CARD_STATUS_SDC_ECC_FAILED (((uint32_t) 1 ) << 21)
-/**Internal card controller error. */
-#define SDC_CARD_STATUS_CC_ERROR        (((uint32_t) 1 ) << 20)
-/**A general or an unknown error occurred during the operation */
-#define SDC_CARD_STATUS_ERROR       (((uint32_t) 1 ) << 19)
-/** Can be either one of the following errors:
-    - The read only section of the CSD does not match the card content.
-    - An attempt to reverse the copy (set as original) or permanent WP (unprotected) bits was made. */
-#define SDC_CARD_STATUS_CSD_OVERWRITE   (((uint32_t) 1 ) << 16)
-/**Set when only partial address space was erased due to existing write protected blocks or the
-   temporary or permanent write protected card was erased.*/
-#define SDC_CARD_STATUS_WP_ERASE_SKIP   (((uint32_t) 1 ) << 15)
-/** The command has been executed without using the internal ECC.*/
-#define SDC_CARD_STATUS_SDC_ECC_DISABLED   (((uint32_t) 1 ) << 14)
-/** An erase sequence was cleared before executing because an out of erase sequence command was received*/
-#define SDC_CARD_STATUS_ERASE_RESET     (((uint32_t) 1 ) << 13)
-/** The current card state*/
-#define SDC_CARD_STATUS_CARDSTATE(x)              ((x >> 9) & 0x0F)
-/** Corresponds to buffer empty signaling on the bus */
-#define SDC_CARD_STATUS_READY_FOR_DATA  (((uint32_t) 1 ) << 8)
-/** The card will expect ACMD, or an indication that the command has been interpreted as ACMD*/
-#define SDC_CARD_STATUS_ACMD_ENABLE     (((uint32_t) 1 ) << 5)
-/* Card error status */
-#define SDC_CARD_STATUS_ERR_MASK         (0xFDF88008)
+typedef enum SDC_TRANSFER_MODE {
+	SDC_TRANSFER_MODE_STREAM = SDC_DATACTRL_XFER_MODE_STREAM,	/*!< Stream transfer mode */
+	SDC_TRANSFER_MODE_BLOCK = SDC_DATACTRL_XFER_MODE_BLOCK,		/*!< Block transfer mode */
+} SDC_TRANSFER_MODE_T;
 
 /**
- * @brief Card Current State definitions
+ * @brief SDC Data Block size definitions (in bytes)
  */
-typedef enum {
-	SDC_CARD_STATE_IDLE = 0,			/*!< Idle state*/
-	SDC_CARD_STATE_READY = 1,			/*!< Ready state */
-	SDC_CARD_STATE_IDENT = 2,			/*!< Identification state*/
-	SDC_CARD_STATE_STBY = 3,			/*!< Stand-by state */
-	SDC_CARD_STATE_TRAN = 4,			/*!< Transfer state */
-	SDC_CARD_STATE_DATA = 5,			/*!< Sending-data state */
-	SDC_CARD_STATE_RCV = 6,				/*!< Receive-data state */
-	SDC_CARD_STATE_PRG = 7,				/*!< Programming state */
-	SDC_CARD_STATE_DIS = 8,				/*!< Disconnect state */
-	SDC_CARD_STATE_UNKNOWN = -1,		/*!< Unknown state */
-} SDC_CARD_STATE_T;
-
-/**
- * @brief R3 response definitions
- */
-#define CMDRESP_R3_OCR_VAL(n)           (((uint32_t) n) & 0xFFFFFF)
-#define CMDRESP_R3_S18A                 (((uint32_t) 1 ) << 24)
-#define CMDRESP_R3_HC_CCS               (((uint32_t) 1 ) << 30)
-#define CMDRESP_R3_INIT_COMPLETE        (((uint32_t) 1 ) << 31)
-
-/**
- * @brief R6 response definitions
- */
-#define CMDRESP_R6_RCA_VAL(n)           (((uint32_t) (n >> 16)) & 0xFFFF)
-#define CMDRESP_R6_CARD_STATUS(n)       (((uint32_t) (n & 0x1FFF)) | \
-										 ((n & (1 << 13)) ? (1 << 19) : 0) | \
-										 ((n & (1 << 14)) ? (1 << 22) : 0) | \
-										 ((n & (1 << 15)) ? (1 << 23) : 0))
-
-/**
- * @brief R7 response definitions
- */
-/** Echo-back of check-pattern */
-#define CMDRESP_R7_CHECK_PATTERN(n)     (((uint32_t) n ) & 0xFF)
-/** Voltage accepted */
-#define CMDRESP_R7_VOLTAGE_ACCEPTED     (((uint32_t) 1 ) << 8)
-
-/**
- * @brief CMD3 command definitions
- */
-/** Card Address */
-#define CMD3_RCA(n)         (((uint32_t) (n & 0xFFFF) ) << 16)
-
-/**
- * @brief CMD7 command definitions
- */
-/** Card Address */
-#define CMD7_RCA(n)         (((uint32_t) (n & 0xFFFF) ) << 16)
-
-/**
- * @brief CMD8 command definitions
- */
-/** Check pattern */
-#define CMD8_CHECKPATTERN(n)            (((uint32_t) (n & 0xFF) ) << 0)
-/** Recommended pattern */
-#define CMD8_DEF_PATTERN                    (0xAA)
-/** Voltage supplied.*/
-#define CMD8_VOLTAGESUPPLIED_27_36     (((uint32_t) 1 ) << 8)
-
-/**
- * @brief CMD9 command definitions
- */
-#define CMD9_RCA(n)         (((uint32_t) (n & 0xFFFF) ) << 16)
-
-/**
- * @brief CMD13 command definitions
- */
-#define CMD13_RCA(n)            (((uint32_t) (n & 0xFFFF) ) << 16)
-
-/**
- * @brief APP_CMD command definitions
- */
-#define CMD55_RCA(n)            (((uint32_t) (n & 0xFFFF) ) << 16)
-
-/**
- * @brief ACMD41 command definitions
- */
-#define ACMD41_OCR(n)                   (((uint32_t) n) & 0xFFFFFF)
-#define ACMD41_S18R                     (((uint32_t) 1 ) << 24)
-#define ACMD41_XPC                      (((uint32_t) 1 ) << 28)
-#define ACMD41_HCS                      (((uint32_t) 1 ) << 30)
-
-/**
- * @brief ACMD6 command definitions
- */
-#define ACMD6_BUS_WIDTH(n)              ((uint32_t) n & 0x03)
-#define ACMD6_BUS_WIDTH_1               (0)
-#define ACMD6_BUS_WIDTH_4               (2)
-
-#define SDC_SECTOR_SIZE             512
+typedef enum SDC_BLOCK_SIZE {
+	SDC_BLOCK_SIZE_1 = 0,		/*!< Block size - 1 byte */
+	SDC_BLOCK_SIZE_2,			/*!< Block size - 2 bytes */
+	SDC_BLOCK_SIZE_4,			/*!< Block size - 4 bytes */
+	SDC_BLOCK_SIZE_8,			/*!< Block size - 8 bytes */
+	SDC_BLOCK_SIZE_16,			/*!< Block size - 16 bytes */
+	SDC_BLOCK_SIZE_32,			/*!< Block size - 32 bytes */
+	SDC_BLOCK_SIZE_64,			/*!< Block size - 64 bytes */
+	SDC_BLOCK_SIZE_128,			/*!< Block size - 128 bytes */
+	SDC_BLOCK_SIZE_256,			/*!< Block size - 256 bytes */
+	SDC_BLOCK_SIZE_512,			/*!< Block size - 512 bytes */
+	SDC_BLOCK_SIZE_1024,		/*!< Block size - 1024 bytes */
+	SDC_BLOCK_SIZE_2048,		/*!< Block size - 2048 bytes */
+} SDC_BLOCK_SIZE_T;
 
 /**
  * @brief SDC Return code definitions
  */
-typedef enum {
+typedef enum CHIP_SDC_RET_CODE {
 	SDC_RET_OK = 0,
 	SDC_RET_CMD_FAILED = -1,
 	SDC_RET_BAD_PARAMETERS = -2,
@@ -341,159 +397,180 @@ typedef enum {
 	SDC_RET_ERR_STATE = -5,
 	SDC_RET_NOT_READY = -6,
 	SDC_RET_FAILED = -7,
-} SDC_RET_CODE_T;
+} CHIP_SDC_RET_CODE_T;
 
 /**
- * @brief Card type definitions
- */
-#define CARD_TYPE_SD    (((uint32_t) 1) << 0)
-#define CARD_TYPE_4BIT  (((uint32_t) 1) << 1)
-#define CARD_TYPE_8BIT  (((uint32_t) 1) << 2)
-#define CARD_TYPE_HC    (SDC_OCR_HC_CCS)/*!< high capacity card > 2GB */
-
-#ifdef SDC_DMA_ENABLE
-/**
- * @brief SDC Event structure
+ * @brief SDC Command Response structure
  */
 typedef struct {
-	uint8_t DmaChannel;		/*!<DMA Channel used for transfer data */
-} SDC_EVENT_Type;
-#else
+	uint8_t CmdIndex;						/*!< Command Index of the command response received */
+	uint32_t Data[SDC_CARDSTATUS_BYTENUM];	/* Card Status which can be stored in 1 or 4 bytes */
+} SDC_RESP_T;
+
 /**
- * @brief SDC Event structure
+ * @brief SDC Data Transfer Setup structure
  */
 typedef struct {
-	void *Buffer;		/*!<pointer to buffer storing data*/
-	uint32_t Size;			/*!<transfer size*/
-	uint32_t Index;			/*!<current transfer index*/
-	uint8_t  Dir;			/*!<0: transmit, 1: receive*/
-} SDC_EVENT_Type;
-#endif /*SDC_DMA_ENABLE*/
-
-/* Function prototype for event setup function */
-typedef void (*SDC_EVSETUP_FUNC_T)(SDC_EVENT_Type *pEvent);
-
-/* Function prototype for wait for event function */
-typedef int32_t (*SDC_EVWAIT_FUNC_T)(void);
-
-/* Function prototype for milliSecond delay function */
-typedef void (*SDC_MSDELAY_FUNC_T)(uint32_t);
-
-/* Card specific setup data */
-typedef struct {
-	uint32_t Response[4];						/*!< Most recent response */
-	uint32_t CID[4];							/*!< CID of acquired card  */
-	uint32_t CSD[4];							/*!< CSD of acquired card */
-	// uint32_t ExtCSD[512 / 4];
-	uint32_t CardType;
-	uint16_t RCA;								/*!< Relative address assigned to card */
-	uint32_t Speed;
-	uint32_t BlockLen;							/*!< Card sector size*/
-	uint32_t DeviceSize;
-	uint32_t BlockNR;
-	uint32_t ClockRate;
-	SDC_EVSETUP_FUNC_T fnEventSetup;			/*!< Function to setup event information*/
-	SDC_EVWAIT_FUNC_T fnWaitEvent;				/*!< Function to wait for event*/
-	SDC_MSDELAY_FUNC_T fnMsDelay;				/*!< Function to sleep in ms*/
-} SDC_CARD_Type;
+	uint16_t BlockNum;						/*!< The number of block which will be transfered */
+	SDC_BLOCK_SIZE_T BlockSize;		/*!< Data Block Length */
+	SDC_TRANSFER_DIR_T Dir;			/*!< Direction */
+	SDC_TRANSFER_MODE_T  Mode;		/*!< Mode */
+	bool     DMAUsed;						/*!< true: DMA used */
+	uint32_t Timeout;						/*!< Data Transfer timeout periods (in Card Bus Clock)*/
+} SDC_DATA_TRANSFER_T;
 
 /**
- * @brief	Initializes the SDC card controller
- * @return	None
+ * @brief	Set the power state of SDC peripheral
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	pwrMode	: Power mode
+ * @param	flag	: Output control flag
+ * @return	Nothing
+ * @note	When the external power supply is switched on, the software first enters the power-up
+ *  state, and waits until the supply output is stable before moving to the power-on state.
+ *  During the power-up state, SD_PWR is set HIGH. The card bus outlets are disabled
+ *  during both states.
+ *  flag is or-ed bit value of SDC_PWR_OPENDRAIN and SDC_PWR_ROD
  */
-void Chip_SDC_Init(void);
+void Chip_SDC_PowerControl(LPC_SDC_T *pSDC, SDC_PWR_CTRL_T pwrMode, uint32_t flag);
 
 /**
- * @brief	Set the frequency of SD_CLK
- * @param	freq		: expected frequency
- * @return	None
+ * @brief	Set clock divider value for SDC peripheral
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	div		: clock divider
+ * @return	Nothing
+ * @note	While the SD card interface is in identification mode, the SD_CLK frequency must be less
+ *  than 400 kHz. The clock frequency can be changed to the maximum card bus frequency
+ *  when relative card addresses are assigned to all cards.
+ *	SD_CLK frequency = MCLK / [2x(ClkDiv+1)].
  */
-void Chip_SDC_SetClock(uint32_t freq);
+void Chip_SDC_SetClockDiv(LPC_SDC_T *pSDC, uint8_t div);
 
 /**
- * @brief	Shutdown the SDC card controller
- * @return	None
+ * @brief	Set or Reset clock control of SDC peripheral
+ * @param	pSDC		: Pointer to SDC register block
+ * @param	ctrlType	: Clock Control type
+ * @param	NewState	: New State to set
+ * @return	Nothing
  */
-void Chip_SDC_DeInit(void);
+void Chip_SDC_ClockControl(LPC_SDC_T *pSDC, SDC_CLOCK_CTRL_T ctrlType,
+						   FunctionalState NewState);
 
 /**
- * @brief	Sets the SD interface interrupt mask
- * @param	iVal	: Interrupts to enable, Or'ed values SDC_MASK0_*
+ * @brief	Set the clock frequency for SDC peripheral
+ * @param	pSDC	: Pointer to SDC peripheral base address
+ * @param	freq	: Expected clock frequency
  * @return	None
  */
-STATIC INLINE void Chip_SDC_SetIntMask(uint32_t iVal)
+void Chip_SDC_SetClock(LPC_SDC_T *pSDC, uint32_t freq);
+
+/**
+ * @brief	Set SDC Command Information
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	Cmd	    : Command value
+ * @param   Arg     : Argument for the command
+ * @return	Nothing
+ */
+void Chip_SDC_SetCommand(LPC_SDC_T *pSDC, uint32_t Cmd, uint32_t Arg);
+
+/**
+ * @brief	Reset SDC Command Information
+ * @param	pSDC	: Pointer to SDC register block
+ * @return	Nothing
+ */
+void Chip_SDC_ResetCommand(LPC_SDC_T *pSDC);
+
+/**
+ * @brief	Get SDC Response
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	pResp	: Pointer to buffer storing response data
+ * @return	Nothing
+ */
+void Chip_SDC_GetResp(LPC_SDC_T *pSDC, SDC_RESP_T *pResp);
+
+/**
+ * @brief	Set SDC Data Timeout Period
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	timeout	: Data timeout value in card bus clock periods
+ * @return	Nothing
+ */
+STATIC INLINE void Chip_SDC_SetDataTimer(LPC_SDC_T *pSDC, uint32_t timeout)
 {
-	IP_SDC_SetIntMask(LPC_SDC, iVal);
+	pSDC->DATATIMER = timeout;
 }
 
 /**
- * @brief	SD card interrupt service routine
- * @param	txBuf	: pointer to TX Buffer. If it is NULL, dont send data to card.
- * @param	txCnt	: pointer to buffer storing the current transmit index.
- * @param	rxBuf	: pointer to RX Buffer. If it is NULL, dont read data from card.
- * @param	rxCnt	: pointer to buffer storing the current receive index.
- * @return	None
+ * @brief	Set SDC Data Transfer Information
+ * @param	pSDC		: Pointer to SDC register block
+ * @param	pTransfer	: Pointer to Data Transfer structure
+ * @return	Nothing
  */
-int32_t Chip_SDC_IRQHandler (uint8_t *txBuf, uint32_t *txCnt,
-							 uint8_t *rxBuf, uint32_t *rxCnt);
+void Chip_SDC_SetDataTransfer(LPC_SDC_T *pSDC, SDC_DATA_TRANSFER_T *pTransfer);
 
 /**
- * @brief	Returns the current SD status, clears pending ints, and disables all ints
- * @return	Current status of Or'ed values SDC_STATUS_*
+ * @brief	Write Data to FIFO
+ * @param	pSDC		: Pointer to SDC register block
+ * @param	pSrc		: Pointer to data buffer
+ * @param	bFirstHalf	: true (write to the first half of FIFO) false (write to the second half of FIFO)
+ * @return	Nothing
  */
-STATIC INLINE uint32_t Chip_SDC_GetStatus(void)
+void Chip_SDC_WriteFIFO(LPC_SDC_T *pSDC, uint32_t *pSrc, bool bFirstHalf);
+
+/**
+ * @brief	Write Data to FIFO
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	pDst	: The buffer hold the data read
+ * @param	bFirstHalf : true (read the first half of FIFO) false (read the second half of FIFO)
+ * @return	Nothing
+ */
+void Chip_SDC_ReadFIFO(LPC_SDC_T *pSDC, uint32_t *pDst, bool bFirstHalf);
+
+/**
+ * @brief	Get status of SDC Peripheral
+ * @param	pSDC	: Pointer to SDC register block
+ * @return	Status (Or-ed bit value of SDC_STATUS_*)
+ */
+STATIC INLINE uint32_t Chip_SDC_GetStatus(LPC_SDC_T *pSDC)
 {
-	return IP_SDC_GetStatus(LPC_SDC);
+	return pSDC->STATUS;
 }
 
 /**
- * @brief	Function to enumerate the SD/MMC/SDHC/MMC+ cards
- * @param	pCardInfo	: Pointer to pre-allocated card info structure
- * @return	1 if a card is acquired, otherwise 0
+ * @brief	Clear status of SDC Peripheral
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	flag	: Status flag(s) to be cleared (Or-ed bit value of SDC_CLEAR_*)
+ * @return	None
  */
-int32_t Chip_SDC_Acquire(SDC_CARD_Type *pCardInfo);
+STATIC INLINE void Chip_SDC_ClearStatus(LPC_SDC_T *pSDC, uint32_t flag)
+{
+	pSDC->CLEAR = flag;
+}
 
 /**
- * @brief	Get card's current state (idle, transfer, program, etc.)
- * @param	pCardInfo	: Card information
- * @return	Current SD card  state
+ * @brief	Set interrupt mask for SDC Peripheral
+ * @param	pSDC	: Pointer to SDC register block
+ * @param	mask	: Interrupt mask (Or-ed bit value of SDC_MASK0_*)
+ * @return	None
  */
-SDC_CARD_STATE_T Chip_SDC_GetCardState(SDC_CARD_Type *pCardInfo);
+STATIC INLINE void Chip_SDC_SetIntMask(LPC_SDC_T *pSDC, uint32_t mask)
+{
+	pSDC->MASK0 = mask;
+}
 
 /**
- * @brief	Get 'card status' of SD Memory card
- * @param	pCardInfo	: Card information
- * @return	Current SD card status
+ * @brief	Initialize the SDC card controller
+ * @param	pSDC	: Pointer to SDC register block
+ * @return	None
  */
-uint32_t Chip_SDC_GetCardStatus(SDC_CARD_Type *pCardInfo);
+void Chip_SDC_Init(LPC_SDC_T *pSDC);
 
 /**
- * @brief	Get 'sd status' of SD Memory card
- * @param	pCardInfo	: Card information
- * @param	pStatus		: buffer storing status. it must be 64-byte-length.
- * @return	the number of byte read
+ * @brief	Deinitialise SDC peripheral
+ * @param	pSDC	: Pointer to SDC peripheral base address
+ * @return	None
  */
-int32_t Chip_SDC_GetSDStatus(SDC_CARD_Type *pCardInfo, uint32_t *pStatus);
+void Chip_SDC_DeInit(LPC_SDC_T *pSDC);
 
-/**
- * @brief	Performs the read of data from the SD/MMC card
- * @param	pCardInfo	: Pointer to Card information structure
- * @param	buffer		: Pointer to data buffer to copy to
- * @param	startblock	: Start block number
- * @param	blockNum	: Number of block to read
- * @return	Bytes read, or 0 on error
- */
-int32_t Chip_SDC_ReadBlocks(SDC_CARD_Type *pCardInfo, void *buffer, int32_t startblock, int32_t blockNum);
-
-/**
- * @brief	Performs write of data to the SD/MMC card
- * @param	pCardInfo	: Pointer to Card information structure
- * @param	buffer		: Pointer to data buffer to copy to
- * @param	startblock	: Start block number
- * @param	blockNum	: Number of block to write
- * @return	Number of bytes actually written, or 0 on error
- */
-int32_t Chip_SDC_WriteBlocks(SDC_CARD_Type *pCardInfo, void *buffer, int32_t startblock, int32_t blockNum);
+#endif /* defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX) */
 
 /**
  * @}

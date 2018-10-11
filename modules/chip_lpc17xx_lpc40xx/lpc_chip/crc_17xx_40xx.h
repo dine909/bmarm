@@ -2,7 +2,7 @@
  * @brief LPC17xx/40xx Cyclic Redundancy Check (CRC) Engine driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -36,31 +36,71 @@
 extern "C" {
 #endif
 
-/** @defgroup CRC_17XX_40XX CHIP: LPC17xx/40xx CRC Driver
+/** @defgroup CRC_17XX_40XX CHIP: LPC17xx/40xx Cyclic Redundancy Check Engine driver
  * @ingroup CHIP_17XX_40XX_Drivers
  * @{
  */
 
-/** CRC polynomial definitions */
-typedef CRC_001_POLY_T CRC_POLY_T;
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+
+/**
+ * @brief CRC register block structure
+ */
+typedef struct {					/*!< CRC Structure */
+	__IO    uint32_t    MODE;		/*!< CRC Mode Register */
+	__IO    uint32_t    SEED;		/*!< CRC SEED Register */
+	union {
+		__I     uint32_t    SUM;	/*!< CRC Checksum Register. */
+		__O     uint32_t    WRDATA32;	/*!< CRC Data Register: write size 32-bit*/
+		__O     uint16_t    WRDATA16;	/*!< CRC Data Register: write size 16-bit*/
+		__O     uint8_t     WRDATA8;	/*!< CRC Data Register: write size 8-bit*/
+	};
+
+} LPC_CRC_T;
+
+/*
+ * @brief CRC MODE register description
+ */
+#define CRC_MODE_POLY_BITMASK   ((0x03))	/** CRC polynomial Bit mask */
+#define CRC_MODE_POLY_CCITT     (0x00)		/** Select CRC-CCITT polynomial */
+#define CRC_MODE_POLY_CRC16     (0x01)		/** Select CRC-16 polynomial */
+#define CRC_MODE_POLY_CRC32     (0x02)		/** Select CRC-32 polynomial */
+#define CRC_MODE_WRDATA_BITMASK (0x03 << 2)	/** CRC WR_Data Config Bit mask */
+#define CRC_MODE_WRDATA_BIT_RVS (1 << 2)	/** Select Bit order reverse for WR_DATA (per byte) */
+#define CRC_MODE_WRDATA_CMPL    (1 << 3)	/** Select One's complement for WR_DATA */
+#define CRC_MODE_SUM_BITMASK    (0x03 << 4)	/** CRC Sum Config Bit mask */
+#define CRC_MODE_SUM_BIT_RVS    (1 << 4)	/** Select Bit order reverse for CRC_SUM */
+#define CRC_MODE_SUM_CMPL       (1 << 5)	/** Select One's complement for CRC_SUM */
+
+#define MODE_CFG_CCITT          (0x00)	/** Pre-defined mode word for default CCITT setup */
+#define MODE_CFG_CRC16          (0x15)	/** Pre-defined mode word for default CRC16 setup */
+#define MODE_CFG_CRC32          (0x36)	/** Pre-defined mode word for default CRC32 setup */
+
+#define CRC_SEED_CCITT          (0x0000FFFF)/** Initial seed value for CCITT mode */
+#define CRC_SEED_CRC16          (0x00000000)/** Initial seed value for CRC16 mode */
+#define CRC_SEED_CRC32          (0xFFFFFFFF)/** Initial seed value for CRC32 mode */
+
+/**
+ * @brief CRC polynomial
+ */
+typedef enum IP_CRC_001_POLY {
+	CRC_POLY_CCITT = CRC_MODE_POLY_CCITT,	/**< CRC-CCIT polynomial */
+	CRC_POLY_CRC16 = CRC_MODE_POLY_CRC16,	/**< CRC-16 polynomial */
+	CRC_POLY_CRC32 = CRC_MODE_POLY_CRC32,	/**< CRC-32 polynomial */
+	CRC_POLY_LAST,
+} CRC_POLY_T;
 
 /**
  * @brief	Initializes the CRC Engine
  * @return	Nothing
  */
-STATIC INLINE void Chip_CRC_Init(void)
-{
-	IP_CRC_Init(LPC_CRC);
-}
+STATIC INLINE void Chip_CRC_Init(void) {}
 
 /**
  * @brief	Deinitializes the CRC Engine
  * @return	Nothing
  */
-STATIC INLINE void Chip_CRC_Deinit(void)
-{
-	IP_CRC_DeInit(LPC_CRC);
-}
+STATIC INLINE void Chip_CRC_Deinit(void) {}
 
 /**
  * @brief	Set the polynomial used for the CRC calculation
@@ -72,7 +112,7 @@ STATIC INLINE void Chip_CRC_Deinit(void)
  */
 STATIC INLINE void Chip_CRC_SetPoly(CRC_POLY_T poly, uint32_t flags)
 {
-	IP_CRC_SetPoly(LPC_CRC, poly, flags);
+	LPC_CRC->MODE = (uint32_t) poly | flags;
 }
 
 /**
@@ -80,47 +120,44 @@ STATIC INLINE void Chip_CRC_SetPoly(CRC_POLY_T poly, uint32_t flags)
  * @param	poly	: The enumerated polynomial to be used
  * @return	Nothing
  */
-STATIC INLINE void Chip_CRC_UseDefaultConfig(CRC_POLY_T poly)
-{
-	IP_CRC_UseDefaultConfig(LPC_CRC, poly);
-}
+void Chip_CRC_UseDefaultConfig(CRC_POLY_T poly);
 
 /**
- * @brief	Set the CRC Mode bits directly
- * @param	mode	: A value indicating the mode
+ * @brief	Set the CRC Mode bits
+ * @param	mode	: Mode value
  * @return	Nothing
  */
 STATIC INLINE void Chip_CRC_SetMode(uint32_t mode)
 {
-	IP_CRC_SetMode(LPC_CRC, mode);
+	LPC_CRC->MODE = mode;
 }
 
 /**
- * @brief	Get the CRC Mode bits directly
+ * @brief	Get the CRC Mode bits
  * @return	The current value of the CRC Mode bits
  */
 STATIC INLINE uint32_t Chip_CRC_GetMode(void)
 {
-	return IP_CRC_GetMode(LPC_CRC);
+	return LPC_CRC->MODE;
 }
 
 /**
  * @brief	Set the seed bits used by the CRC_SUM register
- * @param	seed	: The seeded value
+ * @param	seed	: Seed value
  * @return	Nothing
  */
 STATIC INLINE void Chip_CRC_SetSeed(uint32_t seed)
 {
-	IP_CRC_SetMode(LPC_CRC, seed);
+	LPC_CRC->SEED = seed;
 }
 
 /**
  * @brief	Get the CRC seed value
- * @return	The seeded value
+ * @return	Seed value
  */
 STATIC INLINE uint32_t Chip_CRC_GetSeed(void)
 {
-	return IP_CRC_GetSeed(LPC_CRC);
+	return LPC_CRC->SEED;
 }
 
 /**
@@ -130,7 +167,7 @@ STATIC INLINE uint32_t Chip_CRC_GetSeed(void)
  */
 STATIC INLINE void Chip_CRC_Write8(uint8_t data)
 {
-	IP_CRC_Write8(LPC_CRC, data);
+	LPC_CRC->WRDATA8 = data;
 }
 
 /**
@@ -140,7 +177,7 @@ STATIC INLINE void Chip_CRC_Write8(uint8_t data)
  */
 STATIC INLINE void Chip_CRC_Write16(uint16_t data)
 {
-	IP_CRC_Write16(LPC_CRC, data);
+	LPC_CRC->WRDATA16 = data;
 }
 
 /**
@@ -150,41 +187,43 @@ STATIC INLINE void Chip_CRC_Write16(uint16_t data)
  */
 STATIC INLINE void Chip_CRC_Write32(uint32_t data)
 {
-	IP_CRC_Write32(LPC_CRC, data);
+	LPC_CRC->WRDATA32 = data;
 }
 
 /**
  * @brief	Gets the CRC Sum based on the Mode and Seed as previously configured
- * @return	The CRC "Checksum."
+ * @return	CRC Checksum value
  */
 STATIC INLINE uint32_t Chip_CRC_Sum(void)
 {
-	return IP_CRC_ReadSum(LPC_CRC);
+	return LPC_CRC->SUM;
 }
 
 /**
  * @brief	Convenience function for computing a standard CCITT checksum from an 8-bit data block
- * @param	data	: A pointer to the block of 8 bit data
+ * @param	data	: Pointer to the block of 8-bit data
  * @param   bytes	: The number of bytes pointed to by data
- * @return	Nothing
+ * @return	Check sum value
  */
 uint32_t Chip_CRC_CRC8(const uint8_t *data, uint32_t bytes);
 
 /**
  * @brief	Convenience function for computing a standard CRC16 checksum from 16-bit data block
- * @param	data	: A pointer to the block of 16-bit data
+ * @param	data	: Pointer to the block of 16-bit data
  * @param   hwords	: The number of 16 byte entries pointed to by data
- * @return	Nothing
+ * @return	Check sum value
  */
 uint32_t Chip_CRC_CRC16(const uint16_t *data, uint32_t hwords);
 
 /**
  * @brief	Convenience function for computing a standard CRC32 checksum from 32-bit data block
- * @param	data	: A pointer to the block of 32-bit data
- * @param   words	: The number of 32 byte entries pointed to by data
- * @return	Nothing
+ * @param	data	: Pointer to the block of 32-bit data
+ * @param   words	: The number of 32-bit entries pointed to by data
+ * @return	Check sum value
  */
 uint32_t Chip_CRC_CRC32(const uint32_t *data, uint32_t words);
+
+#endif /* defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX) */
 
 /**
  * @}

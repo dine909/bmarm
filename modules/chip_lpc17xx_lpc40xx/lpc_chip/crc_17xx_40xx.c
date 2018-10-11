@@ -2,7 +2,7 @@
  * @brief LPC17xx/40xx Cyclic Redundancy Check (CRC) Engine driver
  *
  * @note
- * Copyright(C) NXP Semiconductors, 2012
+ * Copyright(C) NXP Semiconductors, 2014
  * All rights reserved.
  *
  * @par
@@ -31,6 +31,8 @@
 
 #include "chip.h"
 
+#if defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX)
+
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
@@ -47,23 +49,62 @@
  * Public functions
  ****************************************************************************/
 
+/* Sets up the CRC engine with defaults based on the polynomial to be used */
+void Chip_CRC_UseDefaultConfig(CRC_POLY_T poly)
+{
+	switch (poly) {
+	case CRC_POLY_CRC16:
+		LPC_CRC->MODE = MODE_CFG_CRC16;
+		LPC_CRC->SEED = CRC_SEED_CRC16;
+		break;
+
+	case CRC_POLY_CRC32:
+		LPC_CRC->MODE = MODE_CFG_CRC32;
+		LPC_CRC->SEED = CRC_SEED_CRC32;
+		break;
+
+	case CRC_POLY_CCITT:
+	default:
+		LPC_CRC->MODE = MODE_CFG_CCITT;
+		LPC_CRC->SEED = CRC_SEED_CCITT;
+		break;
+	}
+}
+
 /* configure CRC engine and compute CCITT checksum from 8-bit data */
 uint32_t Chip_CRC_CRC8(const uint8_t *data, uint32_t bytes)
 {
 	Chip_CRC_UseDefaultConfig(CRC_POLY_CCITT);
-	return IP_CRC_CRC8(LPC_CRC, data, bytes);
+	while (bytes > 0) {
+		Chip_CRC_Write8(*data);
+		data++;
+		bytes--;
+	}
+	return Chip_CRC_Sum();
 }
 
 /* Convenience function for computing a standard CRC16 checksum from 16-bit data block */
 uint32_t Chip_CRC_CRC16(const uint16_t *data, uint32_t hwords)
 {
 	Chip_CRC_UseDefaultConfig(CRC_POLY_CRC16);
-	return IP_CRC_CRC16(LPC_CRC, data, hwords);
+	while (hwords > 0) {
+		Chip_CRC_Write16(*data);
+		data++;
+		hwords--;
+	}
+	return Chip_CRC_Sum();
 }
 
 /* Convenience function for computing a standard CRC32 checksum from 32-bit data block */
 uint32_t Chip_CRC_CRC32(const uint32_t *data, uint32_t words)
 {
 	Chip_CRC_UseDefaultConfig(CRC_POLY_CRC32);
-	return IP_CRC_CRC32(LPC_CRC, data, words);
+	while (words > 0) {
+		Chip_CRC_Write32(*data);
+		data++;
+		words--;
+	}
+	return Chip_CRC_Sum();
 }
+
+#endif /* defined(CHIP_LPC177X_8X) || defined(CHIP_LPC40XX) */
