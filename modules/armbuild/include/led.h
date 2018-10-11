@@ -8,6 +8,8 @@ extern "C" {
 
 void initLeds();
 void setLed(uint32_t ledid, uint32_t state);
+const uint32_t ledCount();
+
 #ifdef __cplusplus
 }
 #endif

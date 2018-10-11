@@ -9,7 +9,7 @@ void setLed(uint32_t ledid, uint32_t state)
 
 void initLeds()
 {
-    for(uint32_t i=0;i<sizeof(leds)/sizeof (BOARD_LED);i++)
+    for(uint32_t i=0;i<LED_COUNT;i++)
     {
         BOARD_LED led=leds[i];
        Chip_GPIO_WriteDirBit(LPC_GPIO,led.port,led.pin, true);

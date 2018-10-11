@@ -242,7 +242,7 @@ void Board_SetupExtMemory(void)
 /* Set up and initialize hardware prior to call to main */
 void Board_SystemInit(void)
 {
-	Board_SetupMuxing();
+//	Board_SetupMuxing();
 	Board_SetupClocking();
 //	Board_SetupExtMemory();
 }
