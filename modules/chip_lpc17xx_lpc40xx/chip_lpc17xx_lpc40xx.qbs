@@ -38,7 +38,7 @@ Module{
     ]
 
     Group {
-        name: "LPC SDK"
+        name: "NXP LPC SDK"
         files: [
             "startup/*.c",
             "libled/*.c",
@@ -52,7 +52,7 @@ Module{
         files: ["cmsis/"+core_cortex.core+"/startup/*.*"]
     }
     Group {
-        name: "Linker Scripts"
+        name: "Chip Linker Scripts"
         files: ["cmsis/"+core_cortex.core+"/linker/*.ld"]
         fileTags: ["linkerscript"]
     }
