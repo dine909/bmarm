@@ -11,7 +11,7 @@ Module{
         path+"/include",
     ]
     Group {
-        name: "sdk"
+        name: "Test Includes"
         files: [
             "include/*.h",
         ]

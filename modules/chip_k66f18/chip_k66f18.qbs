@@ -28,7 +28,7 @@ Module{
     ]
 
     Group {
-        name: "sdk"
+        name: "NXP Freescale SDK"
         files: [
             "*/*.S",
             "*/*.c",
@@ -38,7 +38,7 @@ Module{
     }
 
     Group {
-        name: "linker scripts"
+        name: "Chip Linker Scripts"
         files: ["linker/MK66FX1M0xxx18_flash.ld"]
         fileTags: ["linkerscript"]
     }
