@@ -244,6 +244,6 @@ void Board_SystemInit(void)
 {
 //	Board_SetupMuxing();
 	Board_SetupClocking();
-//	Board_SetupExtMemory();
+	Board_SetupExtMemory();
 }
 
