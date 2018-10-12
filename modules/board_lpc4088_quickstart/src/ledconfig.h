@@ -2,7 +2,7 @@
 #define LEDCONFIG_H
 #include "chip_led.h"
 
-BOARD_LED leds[]={
+const BOARD_LED leds[]={
     {1,18,1}, // green
     {0,13,1}, // green
     {1,13,0}, // blue
