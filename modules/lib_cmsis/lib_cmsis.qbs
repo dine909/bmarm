@@ -17,7 +17,7 @@ Module {
         qbs.buildVariant === "debug"?"DEBUG":"NDEBUG"
     ]
     Group {
-        name: "cmsis"
+        name: "Arm CMSIS Library"
         prefix: "include"
         files: [
             "*/*.h",
@@ -49,8 +49,8 @@ Module {
     cpp.linkerFlags: [
         "--gc-sections",
         "-static",
-//        "-z", "muldefs",
-        "-lm","-lc","-lgcc","-lnosys"
+        "-lm","-lc","-lgcc","-lnosys",
+        "--print-memory-usage"
     ]
     //    Group {
     //        name: "generic linker"
