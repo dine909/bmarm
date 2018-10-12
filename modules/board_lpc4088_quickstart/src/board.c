@@ -913,3 +913,6 @@ void Board_USBD_Init(uint32_t port)
 
 }
 
+void SystemInit(void){
+    Board_SystemInit();
+}

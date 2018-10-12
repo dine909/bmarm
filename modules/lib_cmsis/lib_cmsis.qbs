@@ -49,7 +49,7 @@ Module {
     cpp.linkerFlags: [
         "--gc-sections",
         "-static",
-        "-z", "muldefs",
+//        "-z", "muldefs",
         "-lm","-lc","-lgcc","-lnosys"
     ]
     //    Group {

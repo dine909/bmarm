@@ -17,12 +17,8 @@ Project {
 
         type: ["application", "hex","bin","size", "elf", "disassembly"]
 
-
-        property string mapName:  {return project.isArm?"-Map":"-map";}
-        cpp.linkerFlags: [mapName,  product.destinationDirectory + "/" +product.name + ".map",]
         cpp.cxxLanguageVersion:"c++14"
         cpp.cLanguageVersion:"c11"
-        cpp.positionIndependentCode: false
 
         Group {
             name: "Application "

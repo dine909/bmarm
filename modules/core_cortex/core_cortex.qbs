@@ -22,4 +22,8 @@ Module {
         ]
     }
 
+    property string mapName:  {return project.isArm?"-Map":"-map";}
+    cpp.linkerFlags: [mapName,  product.destinationDirectory + "/" +product.name + ".map",]
+    cpp.positionIndependentCode: false
+
 }

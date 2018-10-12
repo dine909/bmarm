@@ -42,10 +42,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern void Board_SystemInit();
-void SystemInit(void){
-    Board_SystemInit();
-}
+//extern void Board_SystemInit();
 #ifdef __cplusplus
 }
 #endif
