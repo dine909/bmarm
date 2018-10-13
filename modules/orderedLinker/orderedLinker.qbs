@@ -42,10 +42,9 @@ Module{
                 var ofile = new TextFile(output.filePath, TextFile.WriteOnly);
                 for (f in args){
                     var file = new TextFile(args[f].filePath);
-                    var content = file.readAll();
                     ofile.write("/* "+args[f].filePath+" */\n\n")
+                    ofile.write(file.readAll());
                     file.close()
-                    ofile.write(content);
                 }
                 ofile.close();
             }
