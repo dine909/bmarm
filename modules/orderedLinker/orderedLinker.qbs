@@ -31,25 +31,13 @@ Module{
             cmd.description =  output.fileName;
             cmd.highlight = "linkergen";
             cmd.sourceCode = function() {
-                var args = [
-                            "orderedLinkerScript",
-                            "orderedLinkerScript_0",
-                            "orderedLinkerScript_chip",
-                            "orderedLinkerScript_chip_family",
-                            "orderedLinkerScript_board",
-                            "orderedLinkerScript_cmsis",
-                            "orderedLinkerScript_1",
-                            "orderedLinkerScript_2",
-                            "orderedLinkerScript_3",
-                            "orderedLinkerScript_4",
-                            "orderedLinkerScript_5",
-                        ].reduce(function (acc, current) {
-                            var value = inputs[current];
-                            if(value) {
-                                return acc.concat(value);
-                            }
-                            return acc;
-                        }, []);;
+                var args = Object.keys(inputs).reduce(function (acc, key) {
+                    var value = inputs[key];
+                    if(value) {
+                        return acc.concat(value);
+                    }
+                    return acc;
+                }, []);
 
                 var ofile = new TextFile(output.filePath, TextFile.WriteOnly);
                 for (f in args){
