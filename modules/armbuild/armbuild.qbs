@@ -3,6 +3,7 @@ import qbs.FileInfo
 
 Module{
     Depends { name: "cpp" }
+    Depends { name: "orderedLinker" }
 
 
 

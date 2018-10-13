@@ -52,8 +52,8 @@ Module{
         files: ["cmsis/"+core_cortex.core+"/startup/*.*"]
     }
     Group {
-        name: "Chip Linker Scripts"
-        files: ["cmsis/"+core_cortex.core+"/linker/*.ld"]
-        fileTags: ["linkerscript"]
+        name: "Linker Scripts (Chip)"
+        files: ["linker/*.ld"]
+        fileTags: ["orderedLinkerScript_chip"]
     }
 }

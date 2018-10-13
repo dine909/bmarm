@@ -21,4 +21,10 @@ Module{
            "*.h",
         ]
     }
+    Group {
+        name: "Linker Scripts (Board)"
+        files: ["linker/*.ld"]
+        fileTags: ["orderedLinkerScript_board"]
+    }
+
 }

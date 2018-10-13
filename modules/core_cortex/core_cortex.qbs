@@ -22,6 +22,12 @@ Module {
         ]
     }
 
+    Group {
+        name: "Linker Scripts (Arm Cortex)"
+        files: ["linker/*"+core_cortex.core+".ld"]
+        fileTags: ["orderedLinkerScript_cmsis"]
+    }
+
     property string mapName:  {return project.isArm?"-Map":"-map";}
     cpp.linkerFlags: [mapName,  product.destinationDirectory + "/" +product.name + ".map",]
     cpp.positionIndependentCode: false

@@ -2,6 +2,7 @@ import qbs
 Module{
 
     Depends { name: "cpp" }
+    Depends { name: "chip_kinetis" }
     Depends { name: "lib_cmsis" }
     Depends { name: "core_cortex" }
     Depends { name: "core_cortex_fp" }
@@ -39,7 +40,7 @@ Module{
 
     Group {
         name: "Chip Linker Scripts"
-        files: ["linker/MK66FX1M0xxx18_flash.ld"]
+        files: ["linker/*.ld"]
         fileTags: ["linkerscript"]
     }
 }

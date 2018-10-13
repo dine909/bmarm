@@ -5,6 +5,7 @@ Module{
     Depends { name: "lib_cmsis" }
     Depends { name: "core_cortex" }
     Depends { name: "core_cortex_fp" }
+    Depends { name: "chip_kinetis" }
 
     property string chip: "none"
 
@@ -16,8 +17,8 @@ Module{
 //    core_cortex_fp.fp: "soft"
 
     cpp.assemblerFlags: [
-                    "-D__STARTUP_CLEAR_BSS",
-                    "-D__STARTUP_INITIALIZE_NONCACHEDATA",
+//                    "-D__STARTUP_CLEAR_BSS",
+//                    "-D__STARTUP_INITIALIZE_NONCACHEDATA",
     ]
 
     cpp.includePaths: [
@@ -40,8 +41,8 @@ Module{
     }
 
     Group {
-        name: "linker scripts"
+        name: "Linker Scripts (0)"
         files: ["linker/*.ld"]
-        fileTags: ["linkerscript"]
+        fileTags: ["orderedLinkerScript_chip"]
     }
 }
