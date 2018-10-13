@@ -19,7 +19,7 @@ Module{
             "orderedLinkerScript_4",
             "orderedLinkerScript_5",
         ]
-                alwaysRun: true
+        alwaysRun: true
         multiplex: true
 
         Artifact {
@@ -31,26 +31,25 @@ Module{
             cmd.description =  output.fileName;
             cmd.highlight = "linkergen";
             cmd.sourceCode = function() {
-                var args = [];
-
-                function concatif(x){
-                    a=inputs[x];
-                    if(a!=undefined){
-                        args=args.concat(a)
-                    }
-                }
-
-                concatif("orderedLinkerScript");
-                concatif("orderedLinkerScript_0");
-                concatif("orderedLinkerScript_chip");
-                concatif("orderedLinkerScript_chip_family");
-                concatif("orderedLinkerScript_board");
-                concatif("orderedLinkerScript_cmsis");
-                concatif("orderedLinkerScript_1");
-                concatif("orderedLinkerScript_2");
-                concatif("orderedLinkerScript_3");
-                concatif("orderedLinkerScript_4");
-                concatif("orderedLinkerScript_5");
+                var args = [
+                            "orderedLinkerScript",
+                            "orderedLinkerScript_0",
+                            "orderedLinkerScript_chip",
+                            "orderedLinkerScript_chip_family",
+                            "orderedLinkerScript_board",
+                            "orderedLinkerScript_cmsis",
+                            "orderedLinkerScript_1",
+                            "orderedLinkerScript_2",
+                            "orderedLinkerScript_3",
+                            "orderedLinkerScript_4",
+                            "orderedLinkerScript_5",
+                        ].reduce(function (acc, current) {
+                            var value = inputs[current];
+                            if(value) {
+                                return acc.concat(value);
+                            }
+                            return acc;
+                        }, []);;
 
                 var ofile = new TextFile(output.filePath, TextFile.WriteOnly);
                 for (f in args){
