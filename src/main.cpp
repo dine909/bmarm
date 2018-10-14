@@ -4,7 +4,7 @@
 #include "board.h"
 
 
-__attribute__ ((section(".sram")))
+//__attribute__ ((section(".sram")))
 volatile uint32_t g_systickCounter=0;
 
 extern "C" void SysTick_Handler()
