@@ -39,8 +39,8 @@ Module{
     }
 
     Group {
-        name: "Chip Linker Scripts"
+        name: "Linker Scripts (Chip)"
         files: ["linker/*.ld"]
-        fileTags: ["linkerscript"]
+        fileTags: ["orderedLinkerScript_chip"]
     }
 }

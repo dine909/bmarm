@@ -367,3 +367,7 @@ void Board_USBD_Init(uint32_t port)
 	while ((LPC_USB->USBClkSt & 0x12) != 0x12); 
 }
 
+void SystemInit(void){
+    Board_SystemInit();
+}
+

@@ -39,14 +39,4 @@
 /* Enable DMA in SDC driver */
 #define SDC_DMA_ENABLE
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern void Board_SystemInit();
-void SystemInit(void){
-    Board_SystemInit();
-}
-#ifdef __cplusplus
-}
-#endif
 #endif /* __SYS_CONFIG_H_ */

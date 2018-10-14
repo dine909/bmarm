@@ -15,7 +15,7 @@ Project {
             condition: project.isArm
         }
 
-        type: ["application", "hex","bin","size", "elf", "disassembly"]
+        type: ["chip_generation","application", "hex","bin","size", "elf", "disassembly"]
 
         cpp.cxxLanguageVersion:"c++14"
         cpp.cLanguageVersion:"c11"
