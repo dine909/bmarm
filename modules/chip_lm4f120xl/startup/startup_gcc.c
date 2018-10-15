@@ -30,6 +30,8 @@
 // Forward declaration of the default fault handlers.
 //
 //*****************************************************************************
+void SystemInit(void);
+
 void Reset_Handler(void);
 static void NmiSR(void);
 static void FaultISR(void);
@@ -244,6 +246,9 @@ void
 Reset_Handler(void)
 {
     unsigned long *pulSrc, *pulDest;
+
+    //Call SystemInit because these utter fannies have totally bypassed any standards.
+    SystemInit();
 
     //
     // Copy the data segment initializers from flash to SRAM.

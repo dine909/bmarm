@@ -12,8 +12,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/pin_map.h"
 #include "inc/hw_ints.h"
-
-#define SystemCoreClock 50000000
+#include "inc/hw_memmap.h"
 
 
 #if defined(__cplusplus)
@@ -23,6 +22,7 @@ extern "C" {
 int SysTick_Config(uint32_t rate);
 void SystemCoreClockUpdate();
 
+extern uint32_t SystemCoreClock;
 
 #if defined(__cplusplus)
 }

@@ -1,10 +1,8 @@
 #ifndef LEDCONFIG_H
 #define LEDCONFIG_H
+
+#include "board.h"
 #include "chip_led.h"
-#include "inc/hw_types.h"
-#include "inc/lm4f120h5qr.h"
-#include "driverlib/gpio.h"
-#include "inc/hw_memmap.h"
 
 #define RED_LED   GPIO_PIN_1
 #define BLUE_LED  GPIO_PIN_2
