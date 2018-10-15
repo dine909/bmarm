@@ -5,7 +5,7 @@ Bare Metal multi vendor Blinky ARM SDK in QBS
 
 ## What is this?
 
-This is a project utilising Qt's QBS build system to manage the cross-compilation of an application targeted for Arm MCUs.  The structure enables fast porting between different MCUs and also facilitates compilation for desktop targets.
+This is a project utilising Qt's build system (QBS) to manage the cross-compilation of an application targeted for Arm MCUs.  The structure enables fast porting between different MCUs and also facilitates compilation for desktop targets.
 
 It is comprised of:
 
