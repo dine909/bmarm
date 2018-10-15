@@ -19,6 +19,7 @@ extern "C" void SysTick_Handler()
 }
 
 #endif
+
 int main()
 {
 #ifdef IS_BARE_METAL
