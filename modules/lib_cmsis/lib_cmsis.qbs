@@ -9,7 +9,8 @@ Module {
     cpp.positionIndependentCode: false
 
     cpp.includePaths: [
-        path+"/include"
+        path+"/include",
+        path+"/include/system"
     ]
 
     cpp.defines:  [
