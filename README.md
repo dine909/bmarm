@@ -5,7 +5,7 @@ Bare Metal multi vendor Blinky ARM SDK in QBS
 
 ## What is this?
 
-This is a project utilising Qt's QBS build system to manage the compilation of an application targeted for Arm MCUs.  The structure enables fast porting between different MCUs and also facilitates compilation on a desktop.
+This is a project utilising Qt's QBS build system to manage the cross-compilation of an application targeted for Arm MCUs.  The structure enables fast porting between different MCUs and also facilitates compilation for desktop targets.
 
 It is comprised of:
 
@@ -31,13 +31,15 @@ Board definitions are located in modules/ and formatted like: board_*
 
 The intent of this library is to provide a ready to go environment for development, testing and verification of production firmware for commercial use.  Secondarily, it enables porting between MCU's and Desktop targets to be trivial.  This is especially handy as it allows offline development on desktop targets.
 
-It is **not** aimed at arduino lovers, or mbed fanatics as it does require vendor integration with vendor specific system and peripheral libraries, and thus requires a level of knowledge that is masked by these frameworks.
+**It is not** aimed at arduino lovers, or mbed fanatics as it does require vendor integration with vendor specific system and peripheral libraries, and thus requires a level of knowledge that is usually masked by these frameworks.
 
 If you have never downloaded and read an MCU datasheet, then this project is not for you.
 
 ## But why not Arduino or mbed?
 
-Apart from inheriting all their bugs and shortcomings, these frameworks are tragically implemented, especially in terms of efficiency.  If you are serious about developing firmware commercially with arduino or mbed frameworks, then i humbly suggest you reconsider and learn more about your target MCU and do it all yourself, it isn't hard at all.  If that isn't possible, you should probably reconsider your career path, perhaps mcdonalds or something.
+Apart from inheriting all their bugs and shortcomings, these frameworks are tragically implemented, especially in terms of efficiency.  Their communities are toxic and full of misinformation.  If you are serious about developing firmware commercially with arduino or mbed frameworks, then I humbly suggest you reconsider and learn more about your target MCU and implement the peripherals you need as the vendor intended, this repo will facilitate both learning of that process and implementation.  
+
+If that isn't possible, you should probably reconsider your low-effort career path, perhaps mcdonalds.
 
 ## Why QBS?
 
@@ -47,7 +49,7 @@ It allows conditional forward and backwards dependency attributes to be applied 
 
 Make and cmake just cant deliver this amount of flexibility, whilst retaining readability.
 
-## Do i need Qt Creator to use this?
+## Do I need Qt Creator to use this?
 
 No, QBS is a cli tool akin to make & cmake.  
 
