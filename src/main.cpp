@@ -9,6 +9,7 @@ volatile uint32_t g_systickCounter=0;
 
 extern "C" void SysTick_Handler()
 {
+    // "Heartbeat" LED flash pattern
     uint32_t tickpos=g_systickCounter%1000;
     if(tickpos==0 || tickpos==200){
         setLed(0,1);
@@ -26,6 +27,7 @@ int main()
     SystemCoreClockUpdate();
     initLeds();
 
+    //Systick set to 1ms
     if(SysTick_Config(SystemCoreClock / 1000U))
     {
         while(1)
