@@ -13,7 +13,7 @@ It is comprised of:
  * Vendor specific driver libraries
  * Managed linker generation 
  * Blinky example (using systick) that compiles for every board
- * Vendor specific LED test library to facilitate the blinky.
+ * Mini vendor specific GPIO library to facilitate the blinky.
  
 ## Which MCU's are currently supported/tested?
 
