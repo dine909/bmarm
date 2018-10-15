@@ -30,11 +30,12 @@
 // Forward declaration of the default fault handlers.
 //
 //*****************************************************************************
-void ResetISR(void);
+void Reset_Handler(void);
 static void NmiSR(void);
 static void FaultISR(void);
 static void IntDefaultHandler(void);
 
+void SysTick_Handler();
 //*****************************************************************************
 //
 // The entry point for the application.
@@ -60,7 +61,7 @@ void (* const g_pfnVectors[])(void) =
 {
     (void (*)(void))((unsigned long)pulStack + sizeof(pulStack)),
                                             // The initial stack pointer
-    ResetISR,                               // The reset handler
+    Reset_Handler,                               // The reset handler
     NmiSR,                                  // The NMI handler
     FaultISR,                               // The hard fault handler
     IntDefaultHandler,                      // The MPU fault handler
@@ -74,7 +75,7 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // Debug monitor handler
     0,                                      // Reserved
     IntDefaultHandler,                      // The PendSV handler
-    IntDefaultHandler,                      // The SysTick handler
+    SysTick_Handler,                        // The SysTick handler
     IntDefaultHandler,                      // GPIO Port A
     IntDefaultHandler,                      // GPIO Port B
     IntDefaultHandler,                      // GPIO Port C
@@ -223,11 +224,11 @@ void (* const g_pfnVectors[])(void) =
 // for the "data" segment resides immediately following the "text" segment.
 //
 //*****************************************************************************
-extern unsigned long _etext;
-extern unsigned long _data;
-extern unsigned long _edata;
-extern unsigned long _bss;
-extern unsigned long _ebss;
+extern unsigned long __etext;
+extern unsigned long __data_start__;
+extern unsigned long __data_end__;
+extern unsigned long __bss_start__;
+extern unsigned long __bss_end__;
 
 //*****************************************************************************
 //
@@ -240,15 +241,15 @@ extern unsigned long _ebss;
 //
 //*****************************************************************************
 void
-ResetISR(void)
+Reset_Handler(void)
 {
     unsigned long *pulSrc, *pulDest;
 
     //
     // Copy the data segment initializers from flash to SRAM.
     //
-    pulSrc = &_etext;
-    for(pulDest = &_data; pulDest < &_edata; )
+    pulSrc = &__etext;
+    for(pulDest = &__data_start__; pulDest < &__data_end__; )
     {
         *pulDest++ = *pulSrc++;
     }
@@ -256,8 +257,8 @@ ResetISR(void)
     //
     // Zero fill the bss segment.
     //
-    __asm("    ldr     r0, =_bss\n"
-          "    ldr     r1, =_ebss\n"
+    __asm("    ldr     r0, =__bss_start__\n"
+          "    ldr     r1, =__bss_end__\n"
           "    mov     r2, #0\n"
           "    .thumb_func\n"
           "zero_loop:\n"

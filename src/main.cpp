@@ -22,8 +22,6 @@ extern "C" void SysTick_Handler()
 int main()
 {
 #ifdef IS_BARE_METAL
-    //    SystemInit();
-    //    SystemSetupClocking();
     SystemCoreClockUpdate();
     initLeds();
 
@@ -38,7 +36,6 @@ int main()
     while(1){
 
     }
-
 
     return 0;
 }

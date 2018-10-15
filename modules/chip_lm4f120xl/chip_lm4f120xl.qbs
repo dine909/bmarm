@@ -23,7 +23,7 @@ Module{
     core_cortex.core: "m4" ;
     core_cortex_fp.fp: "hard"
 
-    cpp.defines:  [ "BOARD_CHIP_".concat(chip),]
+    cpp.defines:  ["TARGET_IS_BLIZZARD_RA1", "BOARD_CHIP_".concat(chip),]
     chipGen.origin:  [
         "flash",    "rx",   "0x00000000",
         "ram" ,     "rwx",  "0x20000000",
