@@ -49,5 +49,7 @@ Make and cmake just cant deliver this amount of flexibility, whilst retaining re
 
 ## Do i need Qt Creator to use this?
 
-No, QBS is a cli tool akin to make & cmake.  Qt Creator does compliment QBS in order to display only the current compilation source in the tree.
+No, QBS is a cli tool akin to make & cmake.  
+
+Qt Creator does compliment QBS in order to display only the current compilation source in the tree.
 
