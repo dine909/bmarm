@@ -6,9 +6,18 @@ Module{
     Depends { name: "lib_cmsis" }
     Depends { name: "core_cortex" }
     Depends { name: "core_cortex_fp" }
+    Depends { name: "chipGen" }
 
     core_cortex.core: "m4"
     core_cortex_fp.fp: "hard"
+//    core_cortex_fp.fp: "hard"
+
+    chipGen.memory:  ["flash", "1280k - 0x410", "ram", "256k" ]
+
+    chipGen.origin:  [
+        "flash",    "rx",   "0x00000410",
+        "ram" ,     "rwx",  "0x1FFFF000",
+    ]
 
     cpp.defines:  [
         "CPU_MK66FX1M0VLQ18",
