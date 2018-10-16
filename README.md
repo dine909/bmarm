@@ -1,12 +1,12 @@
-# Bare Metal GCC Arm
+# Bare Metal [QBS](http://doc.qt.io/qbs) GCC Arm
 
-Bare Metal multi vendor Blinky ARM SDK in QBS for GCC compilers.
+Bare Metal multi vendor Blinky ARM SDK in [QBS](http://doc.qt.io/qbs) for GCC compilers.
 
 
 ------------------	
 ## What is this?
 
-This is a project utilising Qt build system (QBS) to manage the cross-compilation of an application targeted for Arm MCUs.  The structure enables fast porting between different MCUs and also facilitates compilation for desktop targets.
+This is a project utilising Qt build system ([QBS](http://doc.qt.io/qbs)) to manage the cross-compilation of an application targeted for Arm MCUs.  The structure enables fast porting between different MCUs and also facilitates compilation for desktop targets.
 
 It is comprised of:
 
@@ -47,20 +47,20 @@ Apart from inheriting all their bugs and shortcomings, these frameworks are trag
 If that isn't possible, you should probably reconsider your low-effort career path, perhaps mcdonalds.
 
 ------------------	
-## Why QBS?
+## Why [QBS](http://doc.qt.io/qbs)?
 
-QBS accomplishes the same task as make and cmake, but is far more flexible and readable.
+[QBS](http://doc.qt.io/qbs) accomplishes the same task as make and cmake, but is far more flexible and readable.
 
-It allows conditional forward and backwards dependency attributes to be applied to the build.  For this project QBS is essential to organising build variant's compilation source and build environment per vendor MCU.  
+It allows conditional forward and backwards dependency attributes to be applied to the build.  For this project [QBS](http://doc.qt.io/qbs) is essential to organising build variant's compilation source and build environment per vendor MCU.  
 
 Make and cmake just cant deliver this amount of flexibility, whilst retaining readability.
 
 ------------------	
 ## Do I need Qt Creator to use this?
 
-No, QBS is a cli tool akin to make & cmake.  
+No, [QBS](http://doc.qt.io/qbs) is a cli tool akin to make & cmake.  
 
-Qt Creator does compliment QBS in order to display only the current compilation source in the tree.
+Qt Creator does compliment [QBS](http://doc.qt.io/qbs) in order to display only the current compilation source in the tree.
 
 ------------------	
 # Getting started
