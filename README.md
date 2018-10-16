@@ -1,6 +1,6 @@
-# Bare Metal Arm
+# Bare Metal GCC Arm
 
-Bare Metal multi vendor Blinky ARM SDK in QBS 
+Bare Metal multi vendor Blinky ARM SDK in QBS for GCC compilers.
 
 
 ------------------	
