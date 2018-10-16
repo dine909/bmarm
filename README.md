@@ -21,14 +21,14 @@ It is comprised of:
 
 Currently there are examples for TI, NXP/LPC, NXP/Freescale/Kinetis and Cypress/Spansion (STM examples to follow)
 
-MCU definitions are located in modules/ and formatted like: chip_* 
+MCU definitions are located in `modules/` and formatted like: `chip_*`
 
 ------------------	
 ## Which boards are currently supported/tested?
 
 A select few boards are implemented.
 
-Board definitions are located in modules/ and formatted like: board_* 
+Board definitions are located in `modules/` and formatted like: `board_*`
  
 ------------------	
 ## Who should use this?
@@ -67,4 +67,4 @@ Qt Creator does compliment [QBS](http://doc.qt.io/qbs) in order to display only 
 
 Firstly, I urge you to file a bug report if you are struggling to 'get started' as the intention of this project is to expedite the 'getting started' process, if you run into problems, then that is a bug.
 
-THIS README IS WIP AND WILL BE COMPLETED OVER THE NEXT COUPLE OF DAYS - PLEASE BARE WITH.
+`THIS README IS WIP AND WILL BE COMPLETED OVER THE NEXT COUPLE OF DAYS - PLEASE BARE WITH.`
