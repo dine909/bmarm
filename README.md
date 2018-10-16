@@ -44,8 +44,6 @@ If you have never downloaded and read an MCU datasheet, then this project is pro
 
 Apart from inheriting all their bugs and shortcomings, these frameworks are tragically implemented, especially in terms of efficiency.  Their communities are toxic and full of misinformation.  If you are serious about developing commercially viable firmware with arduino or mbed frameworks, then I humbly suggest you reconsider and learn more about your target MCU and implement the peripherals you need as the vendor intended, this repo will facilitate both learning of that process and implementation.  
 
-If that isn't possible, you should probably reconsider your low-effort career path, perhaps mcdonalds.
-
 ------------------	
 ## Why [QBS](http://doc.qt.io/qbs)?
 
