@@ -35,16 +35,8 @@ Board definitions are located in `modules/` and formatted like: `board_*`
 
 The intent of this library is to provide a ready to go environment for development, testing and verification of production firmware for commercial use.  Secondarily, it enables porting between MCU's and Desktop targets to be trivial.  This is especially handy as it allows offline development of your application on desktop targets, which with a little thought and pre-planning, can make debugging a sizeable project a pleasure and a breeze.
 
-**This project is not** aimed at arduino lovers, or mbed fanatics, as it does require integration with vendor specific system & peripheral libraries, and thus requires a level of understanding that is usually masked by these frameworks.  It must be stressed that the knowledge required to achieve this is not as complicated as you may think, but does involve extensive reading, a good place to start skimming is Arm's [website](http://arm-software.github.io/CMSIS_5/General/html/index.html), and [CMSIS](https://github.com/ARM-software/CMSIS_5) libraries.
-
-If you have never downloaded and read an MCU datasheet, then this project is probably not for you.
-
 ------------------	
-## But why not Arduino or mbed?
 
-Apart from inheriting all their bugs and shortcomings, these frameworks are tragically implemented, especially in terms of efficiency.  Their communities are toxic and full of misinformation.  If you are serious about developing commercially viable firmware with arduino or mbed frameworks, then I humbly suggest you reconsider and learn more about your target MCU and implement the peripherals you need as the vendor intended, this repo will facilitate both learning of that process and implementation.  
-
-------------------	
 ## Why [QBS](http://doc.qt.io/qbs)?
 
 [QBS](http://doc.qt.io/qbs) accomplishes the same task as make and cmake, but is far more flexible and readable.
