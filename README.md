@@ -56,5 +56,3 @@ Qt Creator does compliment [QBS](http://doc.qt.io/qbs) in order to display only 
 # Getting started
 
 Firstly, I urge you to file a bug report if you are struggling to 'get started' as the intention of this project is to expedite the 'getting started' process, if you run into problems, then that is a bug.
-
-`THIS README IS WIP AND WILL BE COMPLETED OVER THE NEXT COUPLE OF DAYS - PLEASE BARE WITH.`
